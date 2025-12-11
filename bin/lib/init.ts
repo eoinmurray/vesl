@@ -19,12 +19,10 @@ export default async function createNewConfig() {
 
   console.log("You entered:", dir.value);
 
-  const configStr = `    
-import { defineConfig } from 'vesl'
-
-export default defineConfig({
-dir: '${dir.value}',
-})`
+  const configStr = `
+export default {
+  dir: '${dir.value}',
+}`
 
   await Bun.write(path, configStr.trim());
 

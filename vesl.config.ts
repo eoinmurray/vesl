@@ -1,5 +1,4 @@
-import { defineConfig } from 'vesl'
 
-export default defineConfig({
+export default {
   dir: 'test-content',
-})
+}
