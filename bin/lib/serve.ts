@@ -47,7 +47,7 @@ async function getDefaultConfig(cwd: string) {
   };
 }
 
-export default async function start() {
+export default async function start(dir?: string) {
   const cwd = process.cwd()
 
   console.log(`Starting veslx dev server in ${cwd}`);
@@ -56,8 +56,9 @@ export default async function start() {
   const defaults = await getDefaultConfig(cwd);
   const fileConfig = await importConfig(cwd);
 
+  // CLI argument takes precedence over config file
   const config = {
-    dir: fileConfig?.dir || defaults.dir,
+    dir: dir || fileConfig?.dir || defaults.dir,
     site: {
       ...defaults.site,
       ...fileConfig?.site,

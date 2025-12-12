@@ -66,7 +66,7 @@ async function getDefaultConfig(cwd: string) {
   };
 }
 
-export default async function buildApp() {
+export default async function buildApp(dir?: string) {
   const cwd = process.cwd()
 
   console.log(`Building veslx app in ${cwd}`);
@@ -75,8 +75,9 @@ export default async function buildApp() {
   const defaults = await getDefaultConfig(cwd);
   const fileConfig = await importConfig(cwd);
 
+  // CLI argument takes precedence over config file
   const config = {
-    dir: fileConfig?.dir || defaults.dir,
+    dir: dir || fileConfig?.dir || defaults.dir,
     site: {
       ...defaults.site,
       ...fileConfig?.site,

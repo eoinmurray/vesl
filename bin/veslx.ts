@@ -21,7 +21,7 @@ cli
   .action(init)
 
 cli
-  .command("serve", "Start the veslx server")
+  .command("serve [dir]", "Start the veslx server")
   .action(serve);
 
 cli
@@ -33,7 +33,7 @@ cli
   .action(stop);
 
 cli
-  .command("build", "Build the veslx app")
+  .command("build [dir]", "Build the veslx app")
   .action(build)
 
 cli.help();
