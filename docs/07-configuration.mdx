@@ -1,33 +1,36 @@
 ---
 title: "Configuration"
-description: "veslx.config.ts options"
+description: "veslx.yaml options"
 ---
 
 <FrontMatter />
 
 # Configuration
 
-veslx works without config. Optionally use `veslx.config.ts`.
+veslx works without config. Values are derived from `package.json` and git.
+
+## Zero Config Defaults
+
+- `name` → from `package.json` or folder name
+- `shortName` → first 2 chars of name
+- `description` → from `package.json`
+- `github` → parsed from git remote
+
+## Optional Config
+
+Create `veslx.yaml` to override:
+
+```yaml
+dir: docs
+site:
+  name: My Project
+  github: user/repo
+```
 
 ## Generate
 
 ```bash
 veslx init
-```
-
-## Config File
-
-```typescript
-// veslx.config.ts
-export default {
-  dir: './docs',
-  site: {
-    name: 'My Project',
-    shortName: 'mp',
-    description: 'Project docs',
-    github: 'user/repo',
-  }
-}
 ```
 
 ## Options
@@ -36,8 +39,8 @@ export default {
 
 Content directory.
 
-```typescript
-dir: './docs'
+```yaml
+dir: docs
 ```
 
 Default: `.`
@@ -46,18 +49,20 @@ Default: `.`
 
 Site name for header and title.
 
-```typescript
-site: { name: 'My Docs' }
+```yaml
+site:
+  name: My Docs
 ```
 
-Default: folder name
+Default: `package.json` name or folder name
 
 ### `site.shortName`
 
 Header logo text.
 
-```typescript
-site: { shortName: 'MD' }
+```yaml
+site:
+  shortName: MD
 ```
 
 Default: first 2 chars of name
@@ -66,26 +71,20 @@ Default: first 2 chars of name
 
 Homepage subtitle.
 
-```typescript
-site: { description: 'Documentation' }
+```yaml
+site:
+  description: Documentation
 ```
 
-Default: none
+Default: `package.json` description
 
 ### `site.github`
 
 GitHub link in header.
 
-```typescript
-site: { github: 'user/repo' }
+```yaml
+site:
+  github: user/repo
 ```
 
-Default: none
-
-## CLI Overrides
-
-```bash
-veslx serve --port 8080
-veslx serve ./my-docs
-veslx build --outDir ./public
-```
+Default: parsed from `git remote get-url origin`

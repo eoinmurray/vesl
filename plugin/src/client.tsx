@@ -1,42 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DirectoryEntry, FileEntry } from "./lib";
-
-async function parsePath(directory: DirectoryEntry, path: string): Promise<{ directory: DirectoryEntry; file: FileEntry | null }> {
-  const parts = path === "." ? [] : path.split("/").filter(Boolean);
-
-  let file = null;
-  let currentDir = directory;
-
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    const isLastPart = i === parts.length - 1;
-
-    // Check if this part matches a file (only on last part)
-    if (isLastPart) {
-      const matchedFile = currentDir.children.find(
-        (child) => child.type === "file" && child.name === part
-      ) as FileEntry | undefined;
-
-      if (matchedFile) {
-        file = matchedFile;
-        break;
-      }
-    }
-
-    // Otherwise, look for a directory
-    const nextDir = currentDir.children.find(
-      (child) => child.type === "directory" && child.name === part
-    ) as DirectoryEntry | undefined;
-
-    if (!nextDir) {
-      throw new Error(`Path not found: ${path}`);
-    }
-
-    currentDir = nextDir;
-  }
-
-  return { directory: currentDir, file };
-}
+import { buildDirectoryTree, navigateToPath } from "./directory-tree";
+// @ts-ignore - virtual module
+import { files, frontmatters } from "virtual:content-modules";
 
 /**
  * Find the main content file for a directory.
@@ -99,83 +65,30 @@ export function findSlides(directory: DirectoryEntry): FileEntry | null {
 
 
 export type DirectoryError =
-  | { type: 'config_not_found'; message: string }
-  | { type: 'path_not_found'; message: string; status: 404 }
-  | { type: 'fetch_error'; message: string }
-  | { type: 'parse_error'; message: string };
+  | { type: 'path_not_found'; message: string; status: 404 };
+
+// Build directory tree once from glob keys, with frontmatter metadata
+const directoryTree = buildDirectoryTree(Object.keys(files), frontmatters as Record<string, FileEntry['frontmatter']>);
 
 export function useDirectory(path: string = ".") {
-  const [directory, setDirectory] = useState<DirectoryEntry | null>(null);
-  const [file, setFile] = useState<FileEntry | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<DirectoryError | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-
-    (async () => {
-      try {
-        const response = await fetch(`/raw/.veslx.json`);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError({ type: 'config_not_found', message: '.veslx.json not found' });
-          } else {
-            setError({ type: 'fetch_error', message: `Failed to fetch: ${response.status} ${response.statusText}` });
-          }
-          return;
-        }
-
-        let json;
-        try {
-          json = await response.json();
-        } catch {
-          setError({ type: 'parse_error', message: 'Failed to parse .veslx.json' });
-          return;
-        }
-
-        let parsed: { directory: DirectoryEntry; file: FileEntry | null };
-        try {
-          parsed = await parsePath(json, path);
-        } catch {
-          setError({ type: 'path_not_found', message: `Path not found: ${path}`, status: 404 });
-          return;
-        }
-
-        parsed.directory.children.sort((a: any, b: any) => {
-          let aDate, bDate;
-          if (a.children) {
-            const readme = findReadme(a);
-            if (readme && readme.frontmatter && readme.frontmatter.date) {
-              aDate = new Date(readme.frontmatter.date as string | number | Date)
-            }
-          }
-          if (b.children) {
-            const readme = findReadme(b);
-            if (readme && readme.frontmatter && readme.frontmatter.date) {
-              bDate = new Date(readme.frontmatter.date as string | number | Date)
-            }
-          }
-          if (aDate && bDate) {
-            return bDate.getTime() - aDate.getTime()
-          }
-          return 0;
-        });
-
-        setDirectory(parsed.directory);
-        setFile(parsed.file);
-      } catch (err: any) {
-        setError({ type: 'fetch_error', message: err.message || 'Unknown error' });
-      } finally {
-        setLoading(false);
-      }
-    })();
-
-    return () => {};
+  const result = useMemo(() => {
+    try {
+      const { directory, file } = navigateToPath(directoryTree, path);
+      return { directory, file };
+    } catch {
+      setError({ type: 'path_not_found', message: `Path not found: ${path}`, status: 404 });
+      return { directory: null, file: null };
+    }
   }, [path]);
 
-  return { directory, file, loading, error };
+  return {
+    directory: result.directory,
+    file: result.file,
+    loading: false, // No async loading needed
+    error
+  };
 }
 
 export function useFileContent(path: string) {

@@ -1,8 +1,6 @@
 import { type Plugin, type Connect } from 'vite'
 import path from 'path'
 import fs from 'fs'
-import { buildAll } from './lib'
-import chokidar, { type FSWatcher } from 'chokidar'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { type VeslxConfig, type ResolvedSiteConfig, DEFAULT_SITE_CONFIG } from './types'
 
@@ -48,10 +46,6 @@ export default function contentPlugin(contentDir: string, config?: VeslxConfig):
     ...DEFAULT_SITE_CONFIG,
     ...config?.site,
   }
-
-  const buildFn = () => buildAll([dir])
-
-  let watchers: FSWatcher[] = []
 
   // Server middleware for serving content files
   const urlToDir = new Map<string, string>()
@@ -131,6 +125,8 @@ export default function contentPlugin(contentDir: string, config?: VeslxConfig):
         // Generate virtual module with import.meta.glob for MDX files
         // - posts: all .mdx files except slides
         // - slides: SLIDES.mdx and *.slides.mdx files
+        // - files: all files for directory tree building
+        // - frontmatters: eager-loaded frontmatter for all MDX files
         return `
 export const posts = import.meta.glob('@content/**/*.mdx', {
   import: 'default',
@@ -138,7 +134,15 @@ export const posts = import.meta.glob('@content/**/*.mdx', {
 });
 export const allMdx = import.meta.glob('@content/**/*.mdx');
 export const slides = import.meta.glob(['@content/**/SLIDES.mdx', '@content/**/*.slides.mdx']);
-export const index = import.meta.glob('@content/.veslx.json', { eager: true });
+
+// All files for directory tree building (images, mdx, etc.)
+export const files = import.meta.glob('@content/**/*.*', { eager: false });
+
+// Frontmatter for all MDX files (eager loaded for directory listing)
+export const frontmatters = import.meta.glob('@content/**/*.mdx', {
+  import: 'frontmatter',
+  eager: true
+});
 
 // Legacy aliases for backwards compatibility
 export const modules = import.meta.glob('@content/**/*.mdx');
@@ -150,52 +154,13 @@ export const modules = import.meta.glob('@content/**/*.mdx');
       }
     },
 
-    async buildStart() {
-      await buildFn()
-    },
     configureServer(server) {
       // Add middleware for serving content files
       server.middlewares.use(middleware)
-
-      // Watch all content directories and rebuild on changes
-      watchers = [dir].map(dir => {
-        const watcher = chokidar.watch(dir, {
-          ignored: (path: string) => path.endsWith('.veslx.json'),
-          persistent: true,
-        })
-
-        watcher.on('change', async () => {
-          const runningFilePath = path.join(dir, '.running')
-          if (!fs.existsSync(runningFilePath)) {
-            await buildFn()
-            server.ws.send({
-              type: 'full-reload',
-              path: '*',
-            })
-          }
-        })
-        
-        watcher.on('unlink', async (filePath) => {
-          if (path.basename(filePath) === '.running') {
-            await buildFn()
-            server.ws.send({
-              type: 'full-reload',
-              path: '*',
-            })
-          }
-        })
-
-        return watcher
-      })
-
     },
     configurePreviewServer(server) {
       // Add middleware for preview server too
       server.middlewares.use(middleware)
-    },
-    async buildEnd() {
-      await Promise.all(watchers.map(w => w.close()))
-      watchers = []
     },
     writeBundle(options) {
       // Copy content directory to dist/raw during production build

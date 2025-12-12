@@ -1,13 +1,14 @@
+import yaml from 'js-yaml';
+import type { VeslxConfig } from '../../plugin/src/types';
 
-
-export default async function importConfig(root: string) {
-  const file = Bun.file(`${root}/veslx.config.ts`);
+export default async function importConfig(root: string): Promise<VeslxConfig | undefined> {
+  const file = Bun.file(`${root}/veslx.yaml`);
 
   if (!await file.exists()) {
-    return
+    return undefined;
   }
-  
-  const module = await import(`file://${root}/veslx.config.ts`);
-  const config = module.default;
-  return config
+
+  const content = await file.text();
+  const config = yaml.load(content) as VeslxConfig;
+  return config;
 }

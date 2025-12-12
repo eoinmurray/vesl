@@ -1,5 +1,5 @@
-
 import { build } from 'vite'
+import { execSync } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import importConfig from "./import-config";
@@ -24,17 +24,44 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-function getDefaultConfig(cwd: string) {
+interface PackageJson {
+  name?: string;
+  description?: string;
+}
+
+async function readPackageJson(cwd: string): Promise<PackageJson | null> {
+  const file = Bun.file(path.join(cwd, 'package.json'));
+  if (!await file.exists()) return null;
+  try {
+    return await file.json();
+  } catch {
+    return null;
+  }
+}
+
+function getGitHubRepo(cwd: string): string {
+  try {
+    const remote = execSync('git remote get-url origin', { cwd, encoding: 'utf-8' }).trim();
+    const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)/);
+    return match ? match[1] : '';
+  } catch {
+    return '';
+  }
+}
+
+async function getDefaultConfig(cwd: string) {
+  const pkg = await readPackageJson(cwd);
   const folderName = path.basename(cwd);
-  const shortName = folderName.slice(0, 2).toLowerCase();
+  const name = pkg?.name || folderName;
+  const shortName = name.slice(0, 2).toLowerCase();
 
   return {
     dir: '.',
     site: {
-      name: folderName,
+      name,
       shortName,
-      description: '',
-      github: '',
+      description: pkg?.description || '',
+      github: getGitHubRepo(cwd),
     }
   };
 }
@@ -44,8 +71,17 @@ export default async function buildApp() {
 
   console.log(`Building veslx app in ${cwd}`);
 
-  // Use config file if it exists, otherwise use smart defaults
-  const config = await importConfig(cwd) || getDefaultConfig(cwd);
+  // Get defaults first, then merge with config file if it exists
+  const defaults = await getDefaultConfig(cwd);
+  const fileConfig = await importConfig(cwd);
+
+  const config = {
+    dir: fileConfig?.dir || defaults.dir,
+    site: {
+      ...defaults.site,
+      ...fileConfig?.site,
+    }
+  };
 
   const veslxRoot = new URL('../..', import.meta.url).pathname;
   const configFile = new URL('../../vite.config.ts', import.meta.url).pathname;
