@@ -62,63 +62,69 @@ export default function Gallery({
 
   if (isLoading) {
     return (
-      <div className="not-prose py-4 md:py-6">
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-[var(--gallery-width)] mx-auto">
+      <figure className="not-prose py-6 md:py-8">
+        <div className="grid grid-cols-3 gap-3 max-w-[var(--gallery-width)] mx-auto">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="aspect-[4/3] bg-muted/30 animate-pulse"
-              style={{ animationDelay: `${i * 100}ms` }}
-            />
+              className="aspect-square rounded-sm bg-muted/20 relative overflow-hidden"
+            >
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/30 to-transparent animate-shimmer"
+                style={{ animationDelay: `${i * 150}ms` }}
+              />
+            </div>
           ))}
         </div>
-      </div>
+      </figure>
     );
   }
 
   if (isEmpty) {
     return (
-      <div className="not-prose py-16 text-center">
-        <div className="inline-flex items-center gap-3 text-muted-foreground/60">
-          <Image className="h-4 w-4" />
-          <span className="font-mono text-sm tracking-wide">no image(s) found</span>
+      <figure className="not-prose py-12 text-center">
+        <div className="inline-flex items-center gap-2.5 text-muted-foreground/40">
+          <Image className="h-3.5 w-3.5" strokeWidth={1.5} />
+          <span className="font-mono text-xs uppercase tracking-widest">No images</span>
         </div>
-      </div>
+      </figure>
     );
   }
 
   return (
     <>
-      <div className="rounded-lg not-prose flex flex-col gap-0 relative p-4 -mx-[calc((var(--gallery-width)-var(--content-width))/2+var(--page-padding))]">
+      <figure className="not-prose relative py-6 md:py-8 -mx-[calc((var(--gallery-width)-var(--content-width))/2+var(--page-padding))]">
         <FigureHeader title={title} subtitle={subtitle} />
 
-        <Carousel>
-          <CarouselContent>
+        <Carousel className="w-full">
+          <CarouselContent className={`-ml-2 md:-ml-3 ${images.length < 3 ? 'justify-center' : ''}`}>
             {images.map((img, index) => (
-              <CarouselItem 
-                key={index} 
-                className="mx-auto md:basis-1/2 lg:basis-1/3 cursor-pointer transition-transform duration-700 ease-out-expo hover:scale-[1.02]"
-                // wrapperClassName="h-full"
+              <CarouselItem
+                key={index}
+                className={`pl-2 md:pl-3 md:basis-1/2 lg:basis-1/3 cursor-pointer group ${images.length < 3 ? 'flex-none' : ''}`}
                 onClick={() => lightbox.open(index)}
               >
-                <LoadingImage
-                  src={img.src}
-                  alt={img.label}
-                />
+                <div className="aspect-square overflow-hidden rounded-sm ring-1 ring-border/50 transition-all duration-300 group-hover:ring-border group-hover:shadow-lg bg-muted/10">
+                  <LoadingImage
+                    src={img.src}
+                    alt={img.label}
+                    className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+                  />
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
 
           {images.length > 3 && (
             <>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="left-4 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background hover:border-border" />
+              <CarouselNext className="right-4 bg-background/80 backdrop-blur-sm border-border/50 hover:bg-background hover:border-border" />
             </>
-          )}          
+          )}
         </Carousel>
 
         <FigureCaption caption={caption} label={captionLabel} />
-      </div>
+      </figure>
 
       {lightbox.isOpen && lightbox.selectedIndex !== null && (
         <Lightbox

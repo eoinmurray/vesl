@@ -1,130 +1,337 @@
-# veslx
+<p align="center">
+  <pre align="center">
+▗▖  ▗▖▗▄▄▄▖ ▗▄▄▖▗▖   ▗▖  ▗▖
+▐▌  ▐▌▐▌   ▐▌   ▐▌    ▝▚▞▘
+▐▌  ▐▌▐▛▀▀▘ ▝▀▚▖▐▌     ▐▌
+ ▝▚▞▘ ▐▙▄▄▖▗▄▄▞▘▐▙▄▄▖▗▞▘▝▚▖
+  </pre>
+</p>
 
-A CLI tool for turning markdown directories into beautiful documentation sites and slide presentations.
+<p align="center">
+  <strong>Turn markdown directories into beautiful documentation sites and presentations</strong>
+</p>
 
-## Installation
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#features">Features</a> •
+  <a href="#components">Components</a> •
+  <a href="#slides">Slides</a> •
+  <a href="#configuration">Config</a>
+</p>
+
+---
+
+## Why veslx?
+
+**veslx** is a zero-config CLI that transforms your markdown files into a polished documentation site. Write in MDX, import React components, render LaTeX equations, display image galleries, and create slide and pdf presentations—all from simple markdown files.
+
+Built on Vite + React + Tailwind. Fast builds. Instant hot reload. Beautiful defaults.
 
 ```bash
 bun install -g veslx
+veslx serve
 ```
+
+That's it. Your docs are live at `localhost:3000`.
+
+---
 
 ## Quick Start
 
+### Install
+
 ```bash
-# Initialize in your content directory
-veslx init
+# Using bun (recommended)
+bun install -g veslx
 
-# Start development server
-veslx serve
-
-# Build for production
-veslx build
+# Or npm
+npm install -g veslx
 ```
 
-## Commands
+### Create Your First Post
 
-| Command | Description |
+```bash
+mkdir -p docs/hello-world
+cat > docs/hello-world/README.mdx << 'EOF'
+---
+title: Hello World
+date: 2025-01-15
+description: My first veslx post
+---
+
+# Hello World
+
+Welcome to **veslx**! This is MDX, so you can use React components:
+
+$$
+E = mc^2
+$$
+
+EOF
+```
+
+### Run
+
+```bash
+cd docs
+veslx serve
+```
+
+Open [localhost:3000](http://localhost:3000). Done.
+
+---
+
+## Features
+
+| Feature | Description |
 |---------|-------------|
-| `veslx init` | Create a `veslx.config.ts` configuration file |
-| `veslx serve` | Start development server with hot reload |
-| `veslx build` | Build for production to `dist/` |
-| `veslx start` | Run as a background daemon (PM2) |
-| `veslx stop` | Stop the daemon |
+| **MDX** | Write markdown with embedded React components |
+| **LaTeX** | Beautiful math rendering via KaTeX |
+| **Syntax Highlighting** | Code blocks with Shiki (150+ languages) |
+| **Image Galleries** | Built-in `<Gallery>` component with lightbox |
+| **Slides** | Create presentations from markdown |
+| **Local Imports** | Import `.tsx` components from your content directory |
+| **Parameter Tables** | Display YAML/JSON configs with collapsible sections |
+| **Dark Mode** | Automatic theme switching |
+| **Hot Reload** | Instant updates during development |
+| **Print to PDF** | Export slides as landscape PDFs |
+
+---
 
 ## Content Structure
 
-veslx scans your content directory for markdown files and renders them as posts or slides:
+veslx scans your directory for `README.mdx` (posts) and `SLIDES.mdx` (presentations):
 
 ```
 content/
 ├── my-post/
-│   ├── README.mdx      # Rendered as a blog post
-│   └── SLIDES.mdx      # Rendered as a presentation
-├── another-post/
-│   └── README.mdx
-└── ...
+│   ├── README.mdx          # → /my-post
+│   ├── Chart.tsx           # Local component (importable)
+│   └── images/
+│       └── figure1.png
+├── my-slides/
+│   └── SLIDES.mdx          # → /my-slides/slides
+└── another-post/
+    └── README.mdx
 ```
 
 ### Frontmatter
 
-Add YAML frontmatter to control metadata:
-
-```mdx
+```yaml
 ---
 title: My Post Title
 date: 2025-01-15
-description: A brief description of the post
-visibility: public
+description: A brief description
+visibility: public          # or "hidden" to hide from listings
 ---
-
-Your content here...
 ```
 
-| Field | Description |
-|-------|-------------|
-| `title` | Display title (falls back to directory name) |
-| `date` | Publication date |
-| `description` | Short description shown in listings |
-| `visibility` | Set to `hidden` to hide from listings |
+---
 
-### Slides
+## Components
+
+### Gallery
+
+Display images with titles, captions, and a fullscreen lightbox:
+
+```mdx
+<Gallery
+  path="my-post/images"
+  globs={["*.png", "*.jpg"]}
+  title="Experiment Results"
+  subtitle="Phase 1 measurements"
+  caption="Data collected over 30 days"
+  captionLabel="Figure 1"
+/>
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `path` | `string` | Path to images directory |
+| `globs` | `string[]` | Glob patterns to match files |
+| `title` | `string` | Gallery title |
+| `subtitle` | `string` | Subtitle below title |
+| `caption` | `string` | Caption below images |
+| `captionLabel` | `string` | Label prefix (e.g., "Figure 1") |
+| `limit` | `number` | Max images to show |
+
+### ParameterTable
+
+Display YAML or JSON configuration files with collapsible sections:
+
+```mdx
+<ParameterTable
+  path="config.yaml"
+  keys={[".simulation.timestep", ".model.layers"]}
+/>
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `path` | `string` | Path to YAML/JSON file |
+| `keys` | `string[]` | jq-like paths to filter (optional) |
+
+### Local Imports
+
+Import React components directly from your content directory:
+
+```mdx
+import Chart from './Chart.tsx'
+import { DataTable } from './components/DataTable.tsx'
+
+# My Analysis
+
+<Chart data={[25, 50, 75, 40, 90]} />
+<DataTable source="results.json" />
+```
+
+Components are compiled at build time by Vite—no runtime overhead.
+
+---
+
+## Slides
 
 Create presentations in `SLIDES.mdx` files. Separate slides with `---`:
 
 ```mdx
 ---
 title: My Presentation
+date: 2025-01-15
 ---
 
-# Slide 1
-
-Content for the first slide
+<FrontMatter />
 
 ---
 
-# Slide 2
+# Introduction
 
-Content for the second slide
+First slide content
+
+---
+
+# Methods
+
+Second slide with an image gallery:
+
+<Gallery path="images" globs={["chart*.png"]} />
+
+---
+
+# Conclusion
+
+Final thoughts
 ```
 
-Navigate slides with arrow keys or `j`/`k`.
+### Navigation
+
+| Key | Action |
+|-----|--------|
+| `↓` `→` `j` | Next slide |
+| `↑` `←` `k` | Previous slide |
+| Scroll | Natural trackpad scrolling |
+
+### Print to PDF
+
+1. Open slides in browser
+2. Press `Cmd+P` (or `Ctrl+P`)
+3. Select "Save as PDF"
+4. Choose **Landscape** orientation
+
+Each slide becomes one PDF page, centered and optimized for print.
+
+---
+
+## CLI Commands
+
+```bash
+veslx init      # Create veslx.config.ts
+veslx serve     # Start dev server with hot reload
+veslx build     # Build for production → dist/
+veslx start     # Run as background daemon (PM2)
+veslx stop      # Stop the daemon
+```
+
+---
 
 ## Configuration
 
-The `veslx.config.ts` file specifies your content directory:
+Create `veslx.config.ts` in your content root:
 
 ```typescript
 export default {
-  dir: './content',
+  dir: './content',  // Content directory (default: current dir)
 }
 ```
 
-## Features
+Or run `veslx init` to generate it.
 
-- **MDX Support** - Write with React components in markdown
-- **Math Rendering** - LaTeX equations via KaTeX
-- **Syntax Highlighting** - Code blocks with Shiki
-- **Hot Reload** - See changes instantly during development
-- **Slide Presentations** - Keyboard-navigable slides from markdown
-- **Dark Mode** - Automatic theme switching
-- **Daemon Mode** - Run as a background service with PM2
+---
+
+## Styling
+
+veslx uses a clean, technical aesthetic out of the box:
+
+- **Typography**: Inter + JetBrains Mono
+- **Colors**: Neutral palette with cyan accents
+- **Dark mode**: Automatic system detection + manual toggle
+
+Built on [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) components.
+
+---
 
 ## Development
 
 ```bash
+# Clone the repo
+git clone https://github.com/eoinmurray/veslx.git
+cd veslx
+
 # Install dependencies
 bun install
 
-# Run locally
+# Run in dev mode (with hot reload on src/)
 bun run dev
 
-# Type check
-bun run typecheck
-
-# Lint
-bun run lint
+# Build for production
+bun run build
 ```
+
+### Project Structure
+
+```
+veslx/
+├── bin/              # CLI entry point
+├── plugin/           # Vite plugins (MDX, content scanning)
+├── src/
+│   ├── components/   # React components (Gallery, Slides, etc.)
+│   ├── hooks/        # React hooks
+│   ├── pages/        # Route pages
+│   └── lib/          # Utilities
+└── test-content/     # Example content for testing
+```
+
+---
+
+## Tech Stack
+
+- **Runtime**: [Bun](https://bun.sh)
+- **Build**: [Vite](https://vitejs.dev)
+- **Framework**: [React 19](https://react.dev)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com)
+- **Components**: [shadcn/ui](https://ui.shadcn.com) + [Radix](https://radix-ui.com)
+- **MDX**: [@mdx-js/rollup](https://mdxjs.com)
+- **Math**: [KaTeX](https://katex.org)
+- **Syntax**: [Shiki](https://shiki.style)
+- **Daemon**: [PM2](https://pm2.keymetrics.io)
+
+---
 
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  <sub>Built with care for researchers, engineers, and anyone who writes technical content.</sub>
+</p>

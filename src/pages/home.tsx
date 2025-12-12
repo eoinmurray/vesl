@@ -5,10 +5,12 @@ import PostList from "@/components/post-list";
 import { ErrorDisplay } from "@/components/page-error";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
+import siteConfig from "virtual:veslx-config";
 
 export function Home() {
   const { "*": path = "." } = useParams();
   const { directory, loading, error } = useDirectory(path)
+  const config = siteConfig;
 
   if (error) {
     return <ErrorDisplay error={error} path={path} />;
@@ -25,8 +27,20 @@ export function Home() {
       <RunningBar />
       <Header />
       <main className="flex-1 mx-auto w-full max-w-[var(--content-width)] px-[var(--page-padding)]">
-        <title>{`Pinglab ${path}`}</title>
-        <main className="flex flex-col gap-6 mb-32 mt-32">
+        <title>{(path === "." || path === "") ? config.name : `${config.name} - ${path}`}</title>
+        <main className="flex flex-col gap-8 mb-32 mt-32">
+          {(path === "." || path === "") && (
+            <div className="animate-fade-in">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+                {config.name}
+              </h1>
+              {config.description && (
+                <p className="mt-2 text-muted-foreground">
+                  {config.description}
+                </p>
+              )}
+            </div>
+          )}
           {directory && (
             <div className="animate-fade-in">
               <PostList directory={directory}/>

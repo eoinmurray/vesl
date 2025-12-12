@@ -2,15 +2,14 @@ import { useParams } from "react-router-dom";
 import { findSlides, isSimulationRunning, useDirectory } from "../../plugin/src/client";
 import Loading from "@/components/loading";
 import { FileEntry } from "plugin/src/lib";
-import { FrontMatter } from "@/components/front-matter";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
 import { useMDXContent } from "@/hooks/use-mdx-content";
 import { mdxComponents } from "@/components/mdx-components";
 
-
 export function Post() {
   const { "path": path = "." } = useParams();
+
   const filePath = `${path}/README.mdx`
   const { directory, loading: dirLoading } = useDirectory(filePath)
   const { Content, frontmatter, loading: mdxLoading, error } = useMDXContent(path);
@@ -39,7 +38,6 @@ export function Post() {
       <RunningBar />
       <Header />
       <main className="flex-1 mx-auto w-full max-w-[var(--content-width)] px-[var(--page-padding)]">
-
         {isRunning && (
           <div className="sticky top-0 z-50 px-[var(--page-padding)] py-2 bg-red-500 text-primary-foreground font-mono text-xs text-center tracking-wide">
             <span className="inline-flex items-center gap-3">
@@ -52,12 +50,6 @@ export function Post() {
 
         {Content && (
           <article className="my-24 prose dark:prose-invert prose-headings:tracking-tight prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline max-w-[var(--prose-width)] animate-fade-in">
-            <FrontMatter
-              title={frontmatter?.title}
-              date={frontmatter?.date}
-              description={frontmatter?.description}
-              slides={slides}
-            />
             <Content components={mdxComponents} />
           </article>
         )}

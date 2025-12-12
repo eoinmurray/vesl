@@ -1,5 +1,5 @@
 import { useState, ImgHTMLAttributes } from "react";
-import { Image } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function LoadingImage({
@@ -11,27 +11,30 @@ export function LoadingImage({
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div className={cn("relative", wrapperClassName)}>
+    <div className={cn("relative overflow-hidden rounded-sm bg-muted/20", wrapperClassName)}>
       {isLoading && !hasError && (
-        <div className="absolute inset-0 bg-muted/30 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border border-border/50 rounded-sm" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/40 to-transparent animate-shimmer" />
         </div>
       )}
       {hasError && (
-        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center">
-          <div className="text-center">
-            <Image className="h-5 w-5 text-muted-foreground/40 mx-auto" />
-            <span className="text-xs text-muted-foreground/40 mt-1.5 block font-mono">failed</span>
+        <div className="absolute inset-0 bg-muted/10 flex items-center justify-center backdrop-blur-sm">
+          <div className="text-center space-y-1">
+            <ImageOff className="h-4 w-4 text-muted-foreground/30 mx-auto" strokeWidth={1.5} />
+            <span className="text-[10px] text-muted-foreground/30 block font-mono uppercase tracking-wider">
+              unavailable
+            </span>
           </div>
         </div>
       )}
       <img
         {...props}
         className={cn(
-          className,
-          "transition-opacity duration-500 ease-out-expo",
-          isLoading && "opacity-0",
-          hasError && "opacity-0"
+          "w-full h-full",
+          "transition-all duration-500 ease-out",
+          isLoading ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100",
+          hasError && "opacity-0",
+          className
         )}
         onLoad={(e) => {
           setIsLoading(false);

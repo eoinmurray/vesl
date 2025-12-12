@@ -7,6 +7,7 @@ import rehypeKatex from 'rehype-katex'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkGfm from 'remark-gfm'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
+import { remarkSlides } from './plugin/src/remark-slides'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
@@ -17,10 +18,19 @@ const distClientPath = path.join(__dirname, 'dist/client')
 const srcPath = path.join(__dirname, 'src')
 const hasPrebuilt = fs.existsSync(path.join(distClientPath, 'main.js'))
 
+// Common remark plugins
+const commonRemarkPlugins = [
+  remarkGfm,
+  remarkMath,
+  remarkFrontmatter,
+  [remarkMdxFrontmatter, { name: 'frontmatter' }],
+]
+
 export default defineConfig(({ command }) => {
   // Only use pre-built files for dev server, not production build
   // Pre-built files have externalized React which breaks production bundles
-  const usePrebuilt = command === 'serve' && hasPrebuilt
+  // VESLX_DEV=1 forces using src for live reload during development
+  const usePrebuilt = command === 'serve' && hasPrebuilt && !process.env.VESLX_DEV
   const clientPath = usePrebuilt ? distClientPath : srcPath
 
   return {
@@ -29,16 +39,25 @@ export default defineConfig(({ command }) => {
   publicDir: path.join(__dirname, 'public'),
   plugins: [
     tailwindcss(),
-    // MDX must run before Vite's default transforms
+    // MDX for slides - splits at --- into <Slide> components
     {
       enforce: 'pre',
       ...mdx({
+        include: /SLIDES\.mdx$/,
         remarkPlugins: [
-          remarkGfm,
-          remarkMath,
-          remarkFrontmatter,
-          [remarkMdxFrontmatter, { name: 'frontmatter' }],
+          ...commonRemarkPlugins,
+          remarkSlides, // Transform --- into <Slide> wrappers
         ],
+        rehypePlugins: [rehypeKatex],
+        providerImportSource: '@mdx-js/react',
+      }),
+    },
+    // MDX for regular posts
+    {
+      enforce: 'pre',
+      ...mdx({
+        exclude: /SLIDES\.mdx$/,
+        remarkPlugins: commonRemarkPlugins,
         rehypePlugins: [rehypeKatex],
         providerImportSource: '@mdx-js/react',
       }),

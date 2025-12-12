@@ -2,60 +2,97 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FULLSCREEN_DATA_ATTR } from "@/lib/constants";
 import { useParams, useSearchParams } from "react-router-dom"
 import Loading from "@/components/loading";
-import { FrontMatter } from "@/components/front-matter";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
 import { useMDXSlides } from "@/hooks/use-mdx-content";
-import { useSlidesFromMDX, SlideContent } from "@/components/slides-renderer";
+import { slidesMdxComponents } from "@/components/slides-renderer";
 
 
 export function SlidesPage() {
   const { "path": path = "." } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Load the compiled MDX module
-  const { Content, frontmatter, loading, error } = useMDXSlides(path);
-
-  // Split the MDX content into slides by <hr> elements
-  const { slides } = useSlidesFromMDX({ Content, frontmatter });
+  // Load the compiled MDX module (now includes slideCount export)
+  const { Content, frontmatter, slideCount, loading, error } = useMDXSlides(path);
 
   // Total slides = 1 (title) + content slides
-  const totalSlides = slides.length + 1;
+  const totalSlides = (slideCount || 0) + 1;
 
-  // Get initial slide from query param
-  const initialSlide = Math.max(0, Math.min(
-    parseInt(searchParams.get("slide") || "0", 10),
-    totalSlides - 1
-  ));
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const titleSlideRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const [currentSlide, setCurrentSlide] = useState(initialSlide);
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Scroll to slide and update query param
-  const goToSlide = useCallback((index: number) => {
-    const clampedIndex = Math.max(0, Math.min(index, totalSlides - 1));
-    const target = slideRefs.current[clampedIndex];
-    if (target) {
-      const targetTop = target.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: targetTop, behavior: "smooth" });
+  // Scroll to slide on initial load if query param is set
+  useEffect(() => {
+    const slideParam = parseInt(searchParams.get("slide") || "0", 10);
+    if (slideParam > 0 && contentRef.current) {
+      const slideEl = contentRef.current.querySelector(`[data-slide-index="${slideParam - 1}"]`);
+      if (slideEl) {
+        slideEl.scrollIntoView({ behavior: "auto" });
+      }
     }
-  }, [totalSlides]);
+  }, [searchParams, Content]);
 
+  // Track current slide based on scroll position
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const index = entry.target.getAttribute("data-slide-index");
+            if (index !== null) {
+              const slideNum = index === "title" ? 0 : parseInt(index, 10) + 1;
+              setCurrentSlide(slideNum);
+              setSearchParams(slideNum > 0 ? { slide: String(slideNum) } : {}, { replace: true });
+            }
+          }
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    // Observe title slide
+    if (titleSlideRef.current) {
+      observer.observe(titleSlideRef.current);
+    }
+
+    // Observe content slides
+    if (contentRef.current) {
+      const slides = contentRef.current.querySelectorAll("[data-slide-index]");
+      slides.forEach((slide) => observer.observe(slide));
+    }
+
+    return () => observer.disconnect();
+  }, [Content, setSearchParams]);
+
+  // Keyboard/scroll navigation helpers
   const goToPrevious = useCallback(() => {
-    goToSlide(currentSlide - 1);
-  }, [currentSlide, goToSlide]);
+    const prev = Math.max(0, currentSlide - 1);
+    if (prev === 0 && titleSlideRef.current) {
+      titleSlideRef.current.scrollIntoView({ behavior: "smooth" });
+    } else if (contentRef.current) {
+      const slideEl = contentRef.current.querySelector(`[data-slide-index="${prev - 1}"]`);
+      slideEl?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [currentSlide]);
 
   const goToNext = useCallback(() => {
-    goToSlide(currentSlide + 1);
-  }, [currentSlide, goToSlide]);
+    const next = Math.min(totalSlides - 1, currentSlide + 1);
+    if (next === 0 && titleSlideRef.current) {
+      titleSlideRef.current.scrollIntoView({ behavior: "smooth" });
+    } else if (contentRef.current) {
+      const slideEl = contentRef.current.querySelector(`[data-slide-index="${next - 1}"]`);
+      slideEl?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [currentSlide, totalSlides]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp" || e.key === "k") {
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
         goToPrevious();
-      } else if (e.key === "ArrowDown" || e.key === "j") {
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "j") {
         e.preventDefault();
         goToNext();
       }
@@ -64,37 +101,6 @@ export function SlidesPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goToPrevious, goToNext]);
-
-  // Update query param on scroll (delayed to avoid interference on load)
-  useEffect(() => {
-    let observer: IntersectionObserver | null = null;
-
-    const timeoutId = setTimeout(() => {
-      observer = new IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) {
-              const index = slideRefs.current.findIndex((ref) => ref === entry.target);
-              if (index !== -1) {
-                setCurrentSlide(index);
-                setSearchParams(index > 0 ? { slide: String(index) } : {}, { replace: true });
-              }
-            }
-          }
-        },
-        { threshold: 0.5 }
-      );
-
-      slideRefs.current.forEach((ref) => {
-        if (ref) observer!.observe(ref);
-      });
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-      observer?.disconnect();
-    };
-  }, [slides.length, setSearchParams]);
 
   if (loading) {
     return <Loading />
@@ -108,7 +114,7 @@ export function SlidesPage() {
     )
   }
 
-  if (slides.length === 0) {
+  if (!Content) {
     return (
       <div className="flex items-center justify-center p-12 text-muted-foreground font-mono text-sm">
         no slides found — use "---" to separate slides
@@ -129,31 +135,9 @@ export function SlidesPage() {
         }}
       />
       <div {...{[FULLSCREEN_DATA_ATTR]: "true"}}>
-        {/* Title slide */}
-        <div
-          ref={(el) => { slideRefs.current[0] = el; }}
-          className="slide-page max-w-xl min-h-[50vh] sm:min-h-[70vh] md:min-h-screen flex items-center justify-center py-8 sm:py-12 md:py-16 px-4 mx-auto"
-        >
-          <FrontMatter
-            title={frontmatter?.title}
-            date={frontmatter?.date}
-            description={frontmatter?.description}
-          />
+        <div ref={contentRef}>
+          <Content components={slidesMdxComponents} />
         </div>
-        <hr className="print:hidden" />
-
-        {/* Content slides */}
-        {slides.map((slideContent, index) => (
-          <div key={index}>
-            <div
-              ref={(el) => { slideRefs.current[index + 1] = el; }}
-              className="slide-page min-h-[50vh] sm:min-h-[70vh] md:min-h-screen flex items-center justify-center py-8 sm:py-12 md:py-16 px-4 mx-auto"
-            >
-              <SlideContent>{slideContent}</SlideContent>
-            </div>
-            {index < slides.length - 1 && <hr className="print:hidden" />}
-          </div>
-        ))}
       </div>
     </main>
   )

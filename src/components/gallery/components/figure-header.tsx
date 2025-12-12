@@ -4,14 +4,14 @@ export function FigureHeader({ title, subtitle }: { title?: string; subtitle?: s
   if (!title && !subtitle) return null;
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="px-[calc((var(--gallery-width)-var(--content-width))/2)] mb-4">
       {title && (
-        <h3 className="text-sm md:text-base font-medium tracking-tight text-foreground text-left">
+        <h3 className="text-[15px] font-medium tracking-[-0.01em] text-foreground">
           {renderMathInText(title)}
         </h3>
       )}
       {subtitle && (
-        <p className="text-sm text-muted-foreground leading-relaxed text-left mt-1">
+        <p className="text-[13px] text-muted-foreground/80 leading-relaxed mt-1">
           {renderMathInText(subtitle)}
         </p>
       )}

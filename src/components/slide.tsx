@@ -1,11 +1,28 @@
+import { ReactNode } from 'react'
 
+interface SlideProps {
+  index: number
+  children: ReactNode
+}
 
-export function Slide({ children }: { children: React.ReactNode }) {
+/**
+ * Slide component - wraps slide content for stacked scrollable display.
+ * Each slide takes full viewport height.
+ */
+export function Slide({ index, children }: SlideProps) {
   return (
-    <div className="w-screen h-screen bg-red-500 flex items-center justify-center p-8">
-      <div className="max-w-5xl w-full h-full">
-        {children}
+    <>
+      {index > 0 && (
+        <hr className="border-t border-border mx-auto max-w-xl" />
+      )}
+      <div
+        className="slide-section min-h-screen flex items-center justify-center py-8 sm:py-12 md:py-16 px-4"
+        data-slide-index={index}
+      >
+        <div className="slide-content prose dark:prose-invert prose-headings:tracking-tight prose-p:leading-relaxed max-w-[var(--content-width)] w-full">
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

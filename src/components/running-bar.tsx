@@ -8,7 +8,7 @@ export function RunningBar() {
     <>
       {isRunning && (
         // this should stay red not another color
-        <div className="sticky top-0 z-50 px-[var(--page-padding)] py-2 bg-red-500 text-primary-foreground font-mono text-xs text-center tracking-wide">
+        <div className="running-bar sticky top-0 z-50 px-[var(--page-padding)] py-2 bg-red-500 text-primary-foreground font-mono text-xs text-center tracking-wide">
           <span className="inline-flex items-center gap-3">
             <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
             <span className="uppercase tracking-widest">simulation running</span>

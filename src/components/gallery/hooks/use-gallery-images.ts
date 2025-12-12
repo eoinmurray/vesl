@@ -1,8 +1,25 @@
 import { useMemo } from "react";
 import { useTheme } from "next-themes";
+import { useParams } from "react-router-dom";
 import { useDirectory } from "../../../../plugin/src/client";
-import { FileEntry } from "../../../../plugin/src/lib";
+import { FileEntry, DirectoryEntry } from "../../../../plugin/src/lib";
 import { minimatch } from "minimatch";
+
+// Recursively collect all image files from a directory tree
+function collectAllImages(entry: DirectoryEntry | FileEntry): FileEntry[] {
+  if (entry.type === "file") {
+    if (entry.name.match(/\.(png|jpg|jpeg|gif|svg|webp)$/i)) {
+      return [entry];
+    }
+    return [];
+  }
+  // It's a directory - recurse into children
+  const images: FileEntry[] = [];
+  for (const child of entry.children || []) {
+    images.push(...collectAllImages(child));
+  }
+  return images;
+}
 
 function sortPathsNumerically(paths: string[]): void {
   paths.sort((a, b) => {
@@ -65,24 +82,44 @@ export function useGalleryImages({
   page?: number;
 }) {
   const { resolvedTheme } = useTheme();
+  const { path: routePath = "" } = useParams();
 
+  // Get the current post's directory from the route
+  // Route is like "gallery-examples/README.mdx" -> "gallery-examples"
+  const currentDir = routePath.replace(/\/?(README|SLIDES)\.mdx?$/i, "").replace(/\/$/, "") || ".";
+
+  // Resolve the path relative to current directory
   let resolvedPath = path;
+  if (path?.startsWith("./")) {
+    // Relative path like "./images" -> "gallery-examples/images"
+    const relativePart = path.slice(2);
+    resolvedPath = currentDir === "." ? relativePart : `${currentDir}/${relativePart}`;
+  } else if (path && !path.startsWith("/") && !path.includes("/")) {
+    // Simple name like "images" -> "gallery-examples/images"
+    resolvedPath = currentDir === "." ? path : `${currentDir}/${path}`;
+  }
 
-  const { directory } = useDirectory(resolvedPath);
+  // If only globs provided (no path), use root directory
+  const directoryPath = resolvedPath || ".";
+  const { directory } = useDirectory(directoryPath);
 
   const paths = useMemo(() => {
     if (!directory) return [];
 
-    const imageChildren = directory.children.filter((child): child is FileEntry => {
-      return !!child.name.match(/\.(png|jpeg|gif|svg|webp)$/i) && child.type === "file";
-    });
-
-    let imagePaths = imageChildren.map(child => child.path);
+    let imagePaths: string[];
 
     if (globs && globs.length > 0) {
-      imagePaths = imagePaths.filter(p => {
-        return globs.some(glob => minimatch(p.split('/').pop() || '', glob));
+      // When globs provided, collect all images recursively and match against full path
+      const allImages = collectAllImages(directory);
+      imagePaths = allImages
+        .map(img => img.path)
+        .filter(p => globs.some(glob => minimatch(p, glob)));
+    } else {
+      // No globs - just get images from the specified directory
+      const imageChildren = directory.children.filter((child): child is FileEntry => {
+        return !!child.name.match(/\.(png|jpg|jpeg|gif|svg|webp)$/i) && child.type === "file";
       });
+      imagePaths = imageChildren.map(child => child.path);
     }
 
     sortPathsNumerically(imagePaths);

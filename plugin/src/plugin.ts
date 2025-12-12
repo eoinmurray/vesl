@@ -4,9 +4,13 @@ import fs from 'fs'
 import { buildAll } from './lib'
 import chokidar, { type FSWatcher } from 'chokidar'
 import type { IncomingMessage, ServerResponse } from 'http'
+import { type VeslxConfig, type ResolvedSiteConfig, DEFAULT_SITE_CONFIG } from './types'
 
 const VIRTUAL_MODULE_ID = 'virtual:content-modules'
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
+
+const VIRTUAL_CONFIG_ID = 'virtual:veslx-config'
+const RESOLVED_VIRTUAL_CONFIG_ID = '\0' + VIRTUAL_CONFIG_ID
 
 /**
  * Recursively copy a directory
@@ -27,7 +31,7 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-export default function contentPlugin(contentDir: string): Plugin {
+export default function contentPlugin(contentDir: string, config?: VeslxConfig): Plugin {
 
   if (!contentDir) {
     throw new Error('Content directory must be specified.')
@@ -38,6 +42,12 @@ export default function contentPlugin(contentDir: string): Plugin {
   }
 
   const dir = contentDir
+
+  // Resolve site config with defaults
+  const siteConfig: ResolvedSiteConfig = {
+    ...DEFAULT_SITE_CONFIG,
+    ...config?.site,
+  }
 
   const buildFn = () => buildAll([dir])
 
@@ -101,15 +111,18 @@ export default function contentPlugin(contentDir: string): Plugin {
           },
         },
         optimizeDeps: {
-          exclude: ['virtual:content-modules'],
+          exclude: ['virtual:content-modules', 'virtual:veslx-config'],
         },
       }
     },
 
-    // Virtual module for content MDX imports
+    // Virtual modules for content MDX imports and site config
     resolveId(id) {
       if (id === VIRTUAL_MODULE_ID) {
         return RESOLVED_VIRTUAL_MODULE_ID
+      }
+      if (id === VIRTUAL_CONFIG_ID) {
+        return RESOLVED_VIRTUAL_CONFIG_ID
       }
     },
 
@@ -121,6 +134,10 @@ export const modules = import.meta.glob('@content/**/README.mdx');
 export const slides = import.meta.glob('@content/**/SLIDES.mdx');
 export const index = import.meta.glob('@content/.veslx.json', { eager: true });
 `
+      }
+      if (id === RESOLVED_VIRTUAL_CONFIG_ID) {
+        // Generate virtual module with site config
+        return `export default ${JSON.stringify(siteConfig)};`
       }
     },
 

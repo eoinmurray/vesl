@@ -1,31 +1,31 @@
-import { createPrompt } from "bun-promptx";
+import nodePath from "path";
 
 export default async function createNewConfig() {
+  const configPath = "veslx.config.ts"
 
-  const path = "veslx.config.ts"
-
-  if (await Bun.file(path).exists()) {
-    console.error(`Configuration file '${path}' already exists in the current directory.`);
+  if (await Bun.file(configPath).exists()) {
+    console.error(`Configuration file '${configPath}' already exists.`);
     return
   }
 
-  console.log("Initializing a new veslx project...");
+  const cwd = process.cwd();
+  const folderName = nodePath.basename(cwd);
+  const shortName = folderName.slice(0, 2).toLowerCase();
 
-  const dir = createPrompt("Enter dir: ");
-  if (dir.error) {
-    console.error("Failed to read dir");
-    process.exit(1);
+  const configStr = `export default {
+  dir: '.',
+  site: {
+    name: '${folderName}',
+    shortName: '${shortName}',
+    description: '',
+    github: '',
   }
+}
+`
 
-  console.log("You entered:", dir.value);
+  await Bun.write(configPath, configStr);
 
-  const configStr = `
-export default {
-  dir: '${dir.value}',
-}`
-
-  await Bun.write(path, configStr.trim());
-
-  console.log("Created 'veslx.config.ts' in the current directory.");
-  console.log("You can now run 'veslx serve' to start the development server.");
+  console.log(`Created veslx.config.ts`);
+  console.log(`\nEdit the file to customize your site, then run:`);
+  console.log(`  veslx serve`);
 }

@@ -2,6 +2,7 @@
 import Gallery from '@/components/gallery'
 import { ParameterTable } from '@/components/parameter-table'
 import { ParameterBadge } from '@/components/parameter-badge'
+import { FrontMatter } from './front-matter'
 
 function generateId(children: unknown): string {
   return children
@@ -13,6 +14,9 @@ function generateId(children: unknown): string {
 
 // Shared MDX components - lab notebook / coder aesthetic
 export const mdxComponents = {
+
+  FrontMatter,
+
   Gallery,
 
   ParameterTable,

@@ -9,6 +9,7 @@ interface MDXModule {
     date?: string
     visibility?: string
   }
+  slideCount?: number // Exported by remark-slides plugin for SLIDES.mdx files
 }
 
 type ModuleLoader = () => Promise<MDXModule>
@@ -64,6 +65,7 @@ export function useMDXContent(path: string) {
 export function useMDXSlides(path: string) {
   const [Content, setContent] = useState<MDXModule['default'] | null>(null)
   const [frontmatter, setFrontmatter] = useState<MDXModule['frontmatter']>(undefined)
+  const [slideCount, setSlideCount] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
@@ -90,6 +92,7 @@ export function useMDXSlides(path: string) {
         if (!cancelled) {
           setContent(() => mod.default)
           setFrontmatter(mod.frontmatter)
+          setSlideCount(mod.slideCount)
           setLoading(false)
         }
       })
@@ -105,5 +108,5 @@ export function useMDXSlides(path: string) {
     }
   }, [path])
 
-  return { Content, frontmatter, loading, error }
+  return { Content, frontmatter, slideCount, loading, error }
 }

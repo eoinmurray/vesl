@@ -24,17 +24,28 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
+function getDefaultConfig(cwd: string) {
+  const folderName = path.basename(cwd);
+  const shortName = folderName.slice(0, 2).toLowerCase();
+
+  return {
+    dir: '.',
+    site: {
+      name: folderName,
+      shortName,
+      description: '',
+      github: '',
+    }
+  };
+}
+
 export default async function buildApp() {
   const cwd = process.cwd()
 
   console.log(`Building veslx app in ${cwd}`);
 
-  const config = await importConfig(cwd);
-
-  if (!config) {
-    console.error("Configuration file 'veslx.config.ts' not found in the current directory.");
-    return
-  }
+  // Use config file if it exists, otherwise use smart defaults
+  const config = await importConfig(cwd) || getDefaultConfig(cwd);
 
   const veslxRoot = new URL('../..', import.meta.url).pathname;
   const configFile = new URL('../../vite.config.ts', import.meta.url).pathname;
@@ -63,7 +74,7 @@ export default async function buildApp() {
       },
     },
     plugins: [
-      veslxPlugin(contentDir)
+      veslxPlugin(contentDir, config)
     ],
     logLevel: 'info',
   })

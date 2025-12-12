@@ -1,21 +1,12 @@
 /// <reference types="vite/client" />
 
-declare module 'virtual:content-modules' {
-  import type { ComponentType } from 'react'
-
-  interface MDXModule {
-    default: ComponentType<{ components?: Record<string, ComponentType> }>
-    frontmatter?: {
-      title?: string
-      description?: string
-      date?: string
-      visibility?: string
-    }
+declare module 'virtual:veslx-config' {
+  interface SiteConfig {
+    name: string;
+    shortName: string;
+    description: string;
+    github: string;
   }
-
-  type ModuleLoader = () => Promise<MDXModule>
-
-  export const modules: Record<string, ModuleLoader>
-  export const slides: Record<string, ModuleLoader>
-  export const index: Record<string, { default: unknown }>
+  const config: SiteConfig;
+  export default config;
 }

@@ -1,21 +1,18 @@
+import siteConfig from "virtual:veslx-config";
 
 export function Welcome() {
+  const config = siteConfig;
+
   return (
     <div className="text-muted-foreground">
-      <pre 
-        className="not-prose text-xs md:text-sm rounded"
-      >
-        {/* Rubifont on figlet */}
-{`
-▗▄▄▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▖    ▗▄▖ ▗▄▄▖ 
-▐▌ ▐▌ █  ▐▛▚▖▐▌▐▌   ▐▌   ▐▌ ▐▌▐▌ ▐▌
-▐▛▀▘  █  ▐▌ ▝▜▌▐▌▝▜▌▐▌   ▐▛▀▜▌▐▛▀▚▖
-▐▌  ▗▄█▄▖▐▌  ▐▌▝▚▄▞▘▐▙▄▄▖▐▌ ▐▌▐▙▄▞▘                                                                    
-`}
-      </pre>
-      <div className="text-xs mt-2 font-mono">
-        PingLab is a repository for running experiments on PING Spiking Neural Networks.
-      </div>
+      <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground mb-2">
+        {config.name}
+      </h1>
+      {config.description && (
+        <p className="text-sm text-muted-foreground/80 font-mono">
+          {config.description}
+        </p>
+      )}
     </div>
   )
 }

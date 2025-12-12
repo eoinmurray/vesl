@@ -31,25 +31,27 @@ export function Lightbox({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] bg-background"
+      className="fixed inset-0 z-[9999] bg-background/98 backdrop-blur-md animate-fade-in-slow"
       onClick={onClose}
       {...{ [FULLSCREEN_DATA_ATTR]: "true" }}
       style={{ top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Top bar */}
       <div
-        className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm"
+        className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="font-mono text-xs text-muted-foreground tabular-nums">
-          {String(selectedIndex + 1).padStart(2, '0')} / {String(images.length).padStart(2, '0')}
+        <div className="font-mono text-[11px] text-muted-foreground/60 tabular-nums tracking-wider uppercase">
+          {String(selectedIndex + 1).padStart(2, '0')}
+          <span className="mx-1.5 text-muted-foreground/30">/</span>
+          {String(images.length).padStart(2, '0')}
         </div>
         <button
           onClick={onClose}
-          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 -m-2 text-muted-foreground/50 hover:text-foreground transition-colors duration-200"
           aria-label="Close"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4" strokeWidth={1.5} />
         </button>
       </div>
 
@@ -60,10 +62,10 @@ export function Lightbox({
             e.stopPropagation();
             onPrevious();
           }}
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-10 p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="fixed left-6 top-1/2 -translate-y-1/2 z-10 p-3 -m-3 text-muted-foreground/40 hover:text-foreground transition-colors duration-200"
           aria-label="Previous image"
         >
-          <ChevronLeft className="h-8 w-8" />
+          <ChevronLeft className="h-6 w-6" strokeWidth={1.5} />
         </button>
       )}
 
@@ -74,10 +76,10 @@ export function Lightbox({
             e.stopPropagation();
             onNext();
           }}
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-10 p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="fixed right-6 top-1/2 -translate-y-1/2 z-10 p-3 -m-3 text-muted-foreground/40 hover:text-foreground transition-colors duration-200"
           aria-label="Next image"
         >
-          <ChevronRight className="h-8 w-8" />
+          <ChevronRight className="h-6 w-6" strokeWidth={1.5} />
         </button>
       )}
 
@@ -86,17 +88,17 @@ export function Lightbox({
         <img
           src={current.src}
           alt={current.label}
-          className="max-w-full max-h-full object-contain"
+          className="max-w-full max-h-full object-contain rounded-sm shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         />
       </div>
 
       {/* Caption */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-10 p-4 text-center bg-background/80 backdrop-blur-sm"
+        className="fixed bottom-0 left-0 right-0 z-10 px-6 py-5 text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className="font-mono text-[11px] text-muted-foreground/50 tracking-wide">
           {current.label}
         </span>
       </div>

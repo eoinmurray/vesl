@@ -4,12 +4,20 @@ export function FigureCaption({ caption, label }: { caption?: string; label?: st
   if (!caption && !label) return null;
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="text-sm text-muted-foreground leading-relaxed text-left">
-        {label && <span className="font-medium text-foreground">{label}</span>}
-        {label && caption && <span className="mx-1">—</span>}
-        {caption && renderMathInText(caption)}
-      </div>
-    </div>
+    <figcaption className="px-[calc((var(--gallery-width)-var(--content-width))/2)] mt-4">
+      <p className="text-[13px] leading-[1.6] text-muted-foreground">
+        {label && (
+          <span className="font-semibold text-foreground tracking-tight">
+            {label}
+            {caption && <span className="font-normal mx-1.5">·</span>}
+          </span>
+        )}
+        {caption && (
+          <span className="text-muted-foreground/90">
+            {renderMathInText(caption)}
+          </span>
+        )}
+      </p>
+    </figcaption>
   );
 }

@@ -1,0 +1,259 @@
+---
+title: "Data Visualization with visx"
+description: "Beautiful, expressive charts for React applications"
+date: "2025-12-12"
+---
+
+import { useState, useMemo } from 'react'
+import { Group } from '@visx/group'
+import { Bar, Line, LinePath, AreaClosed, Circle } from '@visx/shape'
+import { scaleLinear, scaleBand, scaleTime } from '@visx/scale'
+import { AxisBottom, AxisLeft } from '@visx/axis'
+import { LinearGradient, GradientDarkgreenGreen, GradientPinkRed, GradientTealBlue } from '@visx/gradient'
+import { curveMonotoneX, curveCardinal } from '@visx/curve'
+import { GridRows, GridColumns } from '@visx/grid'
+import { Text } from '@visx/text'
+
+# Data Visualization with visx
+
+**Low-level visualization primitives for React**
+
+---
+
+## Why visx?
+
+- **Composable** — Build exactly what you need
+- **Performant** — Renders to SVG, no canvas overhead
+- **React-native** — First-class React components
+- **Type-safe** — Full TypeScript support
+- **Unopinionated** — No predefined chart types
+
+---
+
+## Bar Chart
+
+export const BarChart = () => {
+  const data = [
+    { label: 'Mon', value: 42 },
+    { label: 'Tue', value: 65 },
+    { label: 'Wed', value: 38 },
+    { label: 'Thu', value: 78 },
+    { label: 'Fri', value: 56 },
+    { label: 'Sat', value: 89 },
+    { label: 'Sun', value: 71 },
+  ]
+  const width = 500, height = 300, margin = { top: 20, right: 20, bottom: 40, left: 40 }
+  const xMax = width - margin.left - margin.right
+  const yMax = height - margin.top - margin.bottom
+  const xScale = scaleBand({ domain: data.map(d => d.label), range: [0, xMax], padding: 0.3 })
+  const yScale = scaleLinear({ domain: [0, Math.max(...data.map(d => d.value))], range: [yMax, 0], nice: true })
+  return (
+    <svg width={width} height={height}>
+      <GradientTealBlue id="bar-gradient" />
+      <Group left={margin.left} top={margin.top}>
+        <GridRows scale={yScale} width={xMax} stroke="currentColor" strokeOpacity={0.1} />
+        {data.map(d => (
+          <Bar key={d.label} x={xScale(d.label)} y={yScale(d.value)} width={xScale.bandwidth()} height={yMax - yScale(d.value)} fill="url(#bar-gradient)" rx={4} />
+        ))}
+        <AxisBottom top={yMax} scale={xScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'middle' }} />
+        <AxisLeft scale={yScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'end', dx: -4 }} />
+      </Group>
+    </svg>
+  )
+}
+
+<div className="flex justify-center">
+  <BarChart />
+</div>
+
+---
+
+## Line Chart
+
+export const LineChart = () => {
+  const data = Array.from({ length: 20 }, (_, i) => ({
+    x: i,
+    y: Math.sin(i * 0.5) * 30 + 50 + Math.random() * 10
+  }))
+  const width = 500, height = 300, margin = { top: 20, right: 20, bottom: 40, left: 40 }
+  const xMax = width - margin.left - margin.right
+  const yMax = height - margin.top - margin.bottom
+  const xScale = scaleLinear({ domain: [0, 19], range: [0, xMax] })
+  const yScale = scaleLinear({ domain: [0, 100], range: [yMax, 0] })
+  return (
+    <svg width={width} height={height}>
+      <GradientPinkRed id="line-gradient" />
+      <Group left={margin.left} top={margin.top}>
+        <GridRows scale={yScale} width={xMax} stroke="currentColor" strokeOpacity={0.1} />
+        <GridColumns scale={xScale} height={yMax} stroke="currentColor" strokeOpacity={0.1} />
+        <LinePath data={data} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="url(#line-gradient)" strokeWidth={3} curve={curveMonotoneX} />
+        {data.map((d, i) => (
+          <Circle key={i} cx={xScale(d.x)} cy={yScale(d.y)} r={4} fill="url(#line-gradient)" />
+        ))}
+        <AxisBottom top={yMax} scale={xScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'middle' }} />
+        <AxisLeft scale={yScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'end', dx: -4 }} />
+      </Group>
+    </svg>
+  )
+}
+
+<div className="flex justify-center">
+  <LineChart />
+</div>
+
+---
+
+## Area Chart
+
+export const AreaChart = () => {
+  const data = Array.from({ length: 30 }, (_, i) => ({
+    x: i,
+    y: Math.pow(i, 1.5) + Math.random() * 20
+  }))
+  const width = 500, height = 300, margin = { top: 20, right: 20, bottom: 40, left: 50 }
+  const xMax = width - margin.left - margin.right
+  const yMax = height - margin.top - margin.bottom
+  const xScale = scaleLinear({ domain: [0, 29], range: [0, xMax] })
+  const yScale = scaleLinear({ domain: [0, Math.max(...data.map(d => d.y))], range: [yMax, 0], nice: true })
+  return (
+    <svg width={width} height={height}>
+      <LinearGradient id="area-gradient" from="#43e97b" to="#38f9d7" fromOpacity={0.8} toOpacity={0.2} />
+      <Group left={margin.left} top={margin.top}>
+        <AreaClosed data={data} x={d => xScale(d.x)} y={d => yScale(d.y)} yScale={yScale} fill="url(#area-gradient)" curve={curveCardinal} />
+        <LinePath data={data} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="#43e97b" strokeWidth={2} curve={curveCardinal} />
+        <AxisBottom top={yMax} scale={xScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'middle' }} />
+        <AxisLeft scale={yScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'end', dx: -4 }} />
+      </Group>
+    </svg>
+  )
+}
+
+<div className="flex justify-center">
+  <AreaChart />
+</div>
+
+---
+
+## Interactive Chart
+
+export const InteractiveChart = () => {
+  const [hoveredBar, setHoveredBar] = useState(null)
+  const data = [
+    { label: 'React', value: 85, color: '#61dafb' },
+    { label: 'Vue', value: 62, color: '#42b883' },
+    { label: 'Angular', value: 45, color: '#dd1b16' },
+    { label: 'Svelte', value: 38, color: '#ff3e00' },
+    { label: 'Solid', value: 28, color: '#2c4f7c' },
+  ]
+  const width = 500, height = 300, margin = { top: 20, right: 20, bottom: 50, left: 50 }
+  const xMax = width - margin.left - margin.right
+  const yMax = height - margin.top - margin.bottom
+  const xScale = scaleBand({ domain: data.map(d => d.label), range: [0, xMax], padding: 0.3 })
+  const yScale = scaleLinear({ domain: [0, 100], range: [yMax, 0] })
+  return (
+    <svg width={width} height={height}>
+      <Group left={margin.left} top={margin.top}>
+        <GridRows scale={yScale} width={xMax} stroke="currentColor" strokeOpacity={0.1} />
+        {data.map(d => (
+          <g key={d.label}>
+            <Bar
+              x={xScale(d.label)}
+              y={yScale(d.value)}
+              width={xScale.bandwidth()}
+              height={yMax - yScale(d.value)}
+              fill={d.color}
+              opacity={hoveredBar === null || hoveredBar === d.label ? 1 : 0.3}
+              rx={4}
+              onMouseEnter={() => setHoveredBar(d.label)}
+              onMouseLeave={() => setHoveredBar(null)}
+              style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+            />
+            {hoveredBar === d.label && (
+              <Text x={xScale(d.label) + xScale.bandwidth() / 2} y={yScale(d.value) - 8} textAnchor="middle" fill="currentColor" fontSize={14} fontWeight="bold">
+                {d.value}%
+              </Text>
+            )}
+          </g>
+        ))}
+        <AxisBottom top={yMax} scale={xScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'middle' }} />
+        <AxisLeft scale={yScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickFormat={v => `${v}%`} tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'end', dx: -4 }} />
+      </Group>
+    </svg>
+  )
+}
+
+<div className="flex justify-center">
+  <InteractiveChart />
+</div>
+
+*Hover over the bars*
+
+---
+
+## Multi-Series
+
+export const MultiSeriesChart = () => {
+  const series = [
+    { name: 'Revenue', color: '#8b5cf6', data: [30, 45, 55, 70, 65, 80, 95] },
+    { name: 'Users', color: '#06b6d4', data: [20, 35, 40, 50, 60, 75, 85] },
+    { name: 'Sessions', color: '#f59e0b', data: [10, 25, 35, 40, 45, 55, 60] },
+  ]
+  const width = 500, height = 300, margin = { top: 20, right: 100, bottom: 40, left: 50 }
+  const xMax = width - margin.left - margin.right
+  const yMax = height - margin.top - margin.bottom
+  const xScale = scaleLinear({ domain: [0, 6], range: [0, xMax] })
+  const yScale = scaleLinear({ domain: [0, 100], range: [yMax, 0] })
+  return (
+    <svg width={width} height={height}>
+      <Group left={margin.left} top={margin.top}>
+        <GridRows scale={yScale} width={xMax} stroke="currentColor" strokeOpacity={0.1} />
+        {series.map(s => (
+          <g key={s.name}>
+            <LinePath data={s.data.map((y, x) => ({ x, y }))} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke={s.color} strokeWidth={3} curve={curveMonotoneX} />
+            {s.data.map((y, x) => (
+              <Circle key={x} cx={xScale(x)} cy={yScale(y)} r={4} fill={s.color} />
+            ))}
+          </g>
+        ))}
+        <AxisBottom top={yMax} scale={xScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickFormat={d => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]} tickLabelProps={{ fill: 'currentColor', fontSize: 11, textAnchor: 'middle' }} />
+        <AxisLeft scale={yScale} stroke="currentColor" strokeOpacity={0.3} tickStroke="currentColor" tickLabelProps={{ fill: 'currentColor', fontSize: 12, textAnchor: 'end', dx: -4 }} />
+        {series.map((s, i) => (
+          <g key={s.name} transform={`translate(${xMax + 15}, ${i * 22 + 10})`}>
+            <rect width={12} height={12} fill={s.color} rx={2} />
+            <Text x={18} y={10} fill="currentColor" fontSize={12}>{s.name}</Text>
+          </g>
+        ))}
+      </Group>
+    </svg>
+  )
+}
+
+<div className="flex justify-center">
+  <MultiSeriesChart />
+</div>
+
+---
+
+## Get Started
+
+```bash
+bun add @visx/shape @visx/scale @visx/axis @visx/group
+```
+
+```jsx
+import { Bar } from '@visx/shape'
+import { scaleLinear, scaleBand } from '@visx/scale'
+import { Group } from '@visx/group'
+import { AxisBottom, AxisLeft } from '@visx/axis'
+```
+
+**github.com/airbnb/visx**
+
+---
+
+## Thank You
+
+visx gives you the **building blocks**
+to create **any visualization** you can imagine
+
+*Made with veslx*
