@@ -101,7 +101,7 @@ export default function contentPlugin(contentDir: string): Plugin {
           },
         },
         optimizeDeps: {
-          exclude: ['virtual:content-modules', 'veslx'],
+          exclude: ['virtual:content-modules'],
         },
       }
     },

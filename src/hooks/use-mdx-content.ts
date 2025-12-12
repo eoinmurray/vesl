@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { modules, slides } from 'virtual:content-modules'
 import type { ComponentType } from 'react'
 
 interface MDXModule {
@@ -13,6 +12,7 @@ interface MDXModule {
 }
 
 type ModuleLoader = () => Promise<MDXModule>
+type ModuleMap = Record<string, ModuleLoader>
 
 export function useMDXContent(path: string) {
   const [Content, setContent] = useState<MDXModule['default'] | null>(null)
@@ -25,20 +25,20 @@ export function useMDXContent(path: string) {
     setLoading(true)
     setError(null)
 
-    // Find the matching module - keys are like "/content-dir/path/README.mdx"
-    // We need to match against the path segment
-    const matchingKey = Object.keys(modules).find(key =>
-      key.endsWith(`/${path}/README.mdx`)
-    )
-    const loader = matchingKey ? (modules as Record<string, ModuleLoader>)[matchingKey] : null
+    // Dynamic import to avoid pre-bundling issues
+    import('virtual:content-modules')
+      .then(({ modules }) => {
+        const matchingKey = Object.keys(modules).find(key =>
+          key.endsWith(`/${path}/README.mdx`)
+        )
+        const loader = matchingKey ? (modules as ModuleMap)[matchingKey] : null
 
-    if (!loader) {
-      setError(new Error(`MDX module not found for path: ${path}`))
-      setLoading(false)
-      return
-    }
+        if (!loader) {
+          throw new Error(`MDX module not found for path: ${path}`)
+        }
 
-    loader()
+        return loader()
+      })
       .then((mod) => {
         if (!cancelled) {
           setContent(() => mod.default)
@@ -72,19 +72,20 @@ export function useMDXSlides(path: string) {
     setLoading(true)
     setError(null)
 
-    // Find the matching module - keys are like "/content-dir/path/SLIDES.mdx"
-    const matchingKey = Object.keys(slides).find(key =>
-      key.endsWith(`/${path}/SLIDES.mdx`)
-    )
-    const loader = matchingKey ? (slides as Record<string, ModuleLoader>)[matchingKey] : null
+    // Dynamic import to avoid pre-bundling issues
+    import('virtual:content-modules')
+      .then(({ slides }) => {
+        const matchingKey = Object.keys(slides).find(key =>
+          key.endsWith(`/${path}/SLIDES.mdx`)
+        )
+        const loader = matchingKey ? (slides as ModuleMap)[matchingKey] : null
 
-    if (!loader) {
-      setError(new Error(`Slides module not found for path: ${path}`))
-      setLoading(false)
-      return
-    }
+        if (!loader) {
+          throw new Error(`Slides module not found for path: ${path}`)
+        }
 
-    loader()
+        return loader()
+      })
       .then((mod) => {
         if (!cancelled) {
           setContent(() => mod.default)
