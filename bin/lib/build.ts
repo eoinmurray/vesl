@@ -51,9 +51,11 @@ export default async function buildApp() {
   await build({
     root: veslxRoot,
     configFile,
+    mode: 'production',
     build: {
       outDir: tempOutDir,
       emptyOutDir: true,
+      watch: null, // Explicitly disable watch mode
       rollupOptions: {
         input: path.join(veslxRoot, 'index.html'),
       },
@@ -61,6 +63,7 @@ export default async function buildApp() {
     plugins: [
       veslxPlugin(contentDir)
     ],
+    logLevel: 'info',
   })
 
   // Copy built files to user's dist directory

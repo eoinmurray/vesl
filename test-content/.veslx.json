@@ -18,12 +18,18 @@
           "type": "file",
           "name": "SLIDES.mdx",
           "path": "test-slides/SLIDES.mdx",
-          "size": 122,
+          "size": 367,
           "frontmatter": {
             "title": "Test Slides",
             "description": "These are test slides for testing purposes.",
             "date": "2024-06-15"
           }
+        },
+        {
+          "type": "file",
+          "name": "Counter.tsx",
+          "path": "test-slides/Counter.tsx",
+          "size": 684
         }
       ]
     },
@@ -34,9 +40,15 @@
       "children": [
         {
           "type": "file",
+          "name": "Chart.tsx",
+          "path": "test-post/Chart.tsx",
+          "size": 480
+        },
+        {
+          "type": "file",
           "name": "README.mdx",
           "path": "test-post/README.mdx",
-          "size": 115,
+          "size": 455,
           "frontmatter": {
             "title": "Test Post",
             "description": "This is a test post for testing purposes.",

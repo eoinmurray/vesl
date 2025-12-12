@@ -4,4 +4,18 @@ description: "This is a test post for testing purposes."
 date: "2024-06-15"
 ---
 
+import Chart from './Chart.tsx'
+
 # Test Post
+
+This post demonstrates local imports in MDX.
+
+## Interactive Chart
+
+Here's a chart component imported from a local file:
+
+<Chart data={[25, 50, 75, 40, 90]} />
+
+## How it works
+
+The MDX is compiled at build time by Vite, so `import Chart from './Chart.tsx'` works natively. No runtime compilation needed!

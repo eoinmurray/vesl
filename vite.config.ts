@@ -57,10 +57,10 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    reportCompressedSize: false,
   },
   optimizeDeps: {
     entries: [path.join(__dirname, 'src/main.tsx')],
-    // Include all CommonJS dependencies that need ESM conversion
     include: [
       'react',
       'react-dom',
@@ -68,25 +68,7 @@ export default defineConfig({
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       '@mdx-js/react',
-      '@mdx-js/mdx',
       'react-router-dom',
-      'acorn-jsx',
-      'acorn',
-      'estree-util-to-js',
-      'recma-jsx',
-      'recma-parse',
-      'recma-stringify',
-      'micromark-extension-mdxjs',
-      'style-to-js',
-      'style-to-object',
-      'debug',
-      'unified',
-      'extend',
-      'bail',
-      'trough',
-      'vfile',
-      'format',
-      'fault',
     ],
   },
 })

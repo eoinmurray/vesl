@@ -5,6 +5,9 @@ import { buildAll } from './lib'
 import chokidar, { type FSWatcher } from 'chokidar'
 import type { IncomingMessage, ServerResponse } from 'http'
 
+const VIRTUAL_MODULE_ID = 'virtual:content-modules'
+const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
+
 /**
  * Recursively copy a directory
  */
@@ -83,6 +86,41 @@ export default function contentPlugin(contentDir: string): Plugin {
 
   return {
     name: 'content',
+
+    // Inject @content alias and fs.allow into Vite config
+    config() {
+      return {
+        resolve: {
+          alias: {
+            '@content': dir,
+          },
+        },
+        server: {
+          fs: {
+            allow: [dir],
+          },
+        },
+      }
+    },
+
+    // Virtual module for content MDX imports
+    resolveId(id) {
+      if (id === VIRTUAL_MODULE_ID) {
+        return RESOLVED_VIRTUAL_MODULE_ID
+      }
+    },
+
+    load(id) {
+      if (id === RESOLVED_VIRTUAL_MODULE_ID) {
+        // Generate virtual module with import.meta.glob for MDX files
+        return `
+export const modules = import.meta.glob('@content/**/README.mdx');
+export const slides = import.meta.glob('@content/**/SLIDES.mdx');
+export const index = import.meta.glob('@content/.veslx.json', { eager: true });
+`
+      }
+    },
+
     async buildStart() {
       await buildFn()
     },

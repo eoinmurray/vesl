@@ -1,35 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FULLSCREEN_DATA_ATTR } from "@/lib/constants";
-import { useDirectory, useFileContent } from "../../plugin/src/client";
 import { useParams, useSearchParams } from "react-router-dom"
 import Loading from "@/components/loading";
 import { FrontMatter } from "@/components/front-matter";
-import { RuntimeMDX } from "@/components/runtime-mdx";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
-
-export function parseSlideContent(content: string): string[] {
-  // Strip frontmatter if present (starts with --- and ends with ---)
-  let processedContent = content;
-  const frontmatterMatch = content.match(/^---\n[\s\S]*?\n---\n/);
-  if (frontmatterMatch) {
-    processedContent = content.slice(frontmatterMatch[0].length);
-  }
-
-  return processedContent
-    .split(/^---$/m)
-    .map((slide) => slide.trim())
-    .filter((slide) => slide.length > 0);
-}
+import { useMDXSlides } from "@/hooks/use-mdx-content";
+import { useSlidesFromMDX, SlideContent } from "@/components/slides-renderer";
 
 
 export function SlidesPage() {
   const { "path": path = "." } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const filePath = `${path}/SLIDES.mdx`
-  const { file } = useDirectory(filePath)
-  const { content, loading, error } = useFileContent(filePath);
-  const slides = content ? parseSlideContent(content) : [];
+
+  // Load the compiled MDX module
+  const { Content, frontmatter, loading, error } = useMDXSlides(path);
+
+  // Split the MDX content into slides by <hr> elements
+  const { slides } = useSlidesFromMDX({ Content, frontmatter });
 
   // Total slides = 1 (title) + content slides
   const totalSlides = slides.length + 1;
@@ -109,15 +97,13 @@ export function SlidesPage() {
   }, [slides.length, setSearchParams]);
 
   if (loading) {
-    return (
-      <Loading />
-    )
+    return <Loading />
   }
 
   if (error) {
     return (
       <main className="min-h-screen bg-background container mx-auto max-w-4xl py-12">
-        <p className="text-center text-red-600">{error}</p>
+        <p className="text-center text-red-600">{error.message}</p>
       </main>
     )
   }
@@ -132,7 +118,7 @@ export function SlidesPage() {
 
   return (
     <main className="slides-container">
-      <title>{file?.frontmatter?.title}</title>
+      <title>{frontmatter?.title}</title>
       <RunningBar />
       <Header
         slideControls={{
@@ -143,26 +129,27 @@ export function SlidesPage() {
         }}
       />
       <div {...{[FULLSCREEN_DATA_ATTR]: "true"}}>
+        {/* Title slide */}
         <div
           ref={(el) => { slideRefs.current[0] = el; }}
           className="slide-page max-w-xl min-h-[50vh] sm:min-h-[70vh] md:min-h-screen flex items-center justify-center py-8 sm:py-12 md:py-16 px-4 mx-auto"
         >
-          {file && (
-            <FrontMatter
-              title={file.frontmatter?.title}
-              date={file.frontmatter?.date}
-              description={file.frontmatter?.description}
-            />
-          )}
+          <FrontMatter
+            title={frontmatter?.title}
+            date={frontmatter?.date}
+            description={frontmatter?.description}
+          />
         </div>
         <hr className="print:hidden" />
-        {slides.map((content, index) => (
+
+        {/* Content slides */}
+        {slides.map((slideContent, index) => (
           <div key={index}>
             <div
               ref={(el) => { slideRefs.current[index + 1] = el; }}
               className="slide-page min-h-[50vh] sm:min-h-[70vh] md:min-h-screen flex items-center justify-center py-8 sm:py-12 md:py-16 px-4 mx-auto"
             >
-              {content && <RuntimeMDX content={content} size="md" />}
+              <SlideContent>{slideContent}</SlideContent>
             </div>
             {index < slides.length - 1 && <hr className="print:hidden" />}
           </div>

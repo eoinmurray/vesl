@@ -1,6 +1,6 @@
 {
   "name": "veslx",
-  "version": "0.0.28",
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "veslx": "bin/veslx.ts"
@@ -15,12 +15,8 @@
     "vite.config.ts"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "typecheck": "tsc -b",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "vite preview"
+    "dev": "bun bin/veslx.ts serve",
+    "build": "bun bin/veslx.ts build"
   },
   "dependencies": {
     "acorn": "^8.15.0",

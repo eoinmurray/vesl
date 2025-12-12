@@ -1,25 +1,27 @@
-
 import { useParams } from "react-router-dom";
-import { findSlides, isSimulationRunning, useDirectory, useFileContent } from "../../plugin/src/client";
+import { findSlides, isSimulationRunning, useDirectory } from "../../plugin/src/client";
 import Loading from "@/components/loading";
 import { FileEntry } from "plugin/src/lib";
 import { FrontMatter } from "@/components/front-matter";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
-import { RuntimeMDX } from "@/components/runtime-mdx";
+import { useMDXContent } from "@/hooks/use-mdx-content";
+import { mdxComponents } from "@/components/mdx-components";
 
 
 export function Post() {
   const { "path": path = "." } = useParams();
   const filePath = `${path}/README.mdx`
-  const { directory, file, loading, error } = useDirectory(filePath)
-  const { content } = useFileContent(filePath);
+  const { directory, loading: dirLoading } = useDirectory(filePath)
+  const { Content, frontmatter, loading: mdxLoading, error } = useMDXContent(path);
   const isRunning = isSimulationRunning();
 
   let slides: FileEntry | null = null;
   if (directory) {
     slides = findSlides(directory);
   }
+
+  const loading = dirLoading || mdxLoading;
 
   if (loading) return <Loading />
 
@@ -33,11 +35,11 @@ export function Post() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background noise-overlay">
-      <title>{file?.frontmatter?.title}</title>
+      <title>{frontmatter?.title}</title>
       <RunningBar />
       <Header />
       <main className="flex-1 mx-auto w-full max-w-[var(--content-width)] px-[var(--page-padding)]">
-        
+
         {isRunning && (
           <div className="sticky top-0 z-50 px-[var(--page-padding)] py-2 bg-red-500 text-primary-foreground font-mono text-xs text-center tracking-wide">
             <span className="inline-flex items-center gap-3">
@@ -48,18 +50,18 @@ export function Post() {
           </div>
         )}
 
-        {file && (
+        {Content && (
           <article className="my-24 prose dark:prose-invert prose-headings:tracking-tight prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline max-w-[var(--prose-width)] animate-fade-in">
             <FrontMatter
-              title={file.frontmatter?.title}
-              date={file.frontmatter?.date}
-              description={file.frontmatter?.description}
+              title={frontmatter?.title}
+              date={frontmatter?.date}
+              description={frontmatter?.description}
               slides={slides}
             />
-            {content && <RuntimeMDX content={content} />}
+            <Content components={mdxComponents} />
           </article>
         )}
       </main>
-    </div>    
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { cac } from "cac";
-import pkg from "../package.json" assert { type: "json" };
+import pkg from "../package.json";
 import init from "./lib/init";
 import serve from "./lib/serve";
 import start from "./lib/start";
