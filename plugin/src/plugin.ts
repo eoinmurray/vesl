@@ -2,7 +2,7 @@ import { type Plugin, type Connect } from 'vite'
 import path from 'path'
 import fs from 'fs'
 import { buildAll } from './lib'
-import chokidar from 'chokidar'
+import chokidar, { type FSWatcher } from 'chokidar'
 import type { IncomingMessage, ServerResponse } from 'http'
 
 /**
@@ -24,18 +24,21 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-export default function contentPlugin(inputDir: string): Plugin {
+export default function contentPlugin(contentDir: string): Plugin {
 
-  if (!inputDir) {
+  if (!contentDir) {
     throw new Error('Content directory must be specified.')
   }
 
-  // Resolve dir to absolute path from user's cwd
-  const dir = path.isAbsolute(inputDir) ? inputDir : path.resolve(process.cwd(), inputDir)
+  if (!path.isAbsolute(contentDir)) {
+    throw new Error(`Content directory must be an absolute path, got: ${contentDir}`)
+  }
+
+  const dir = contentDir
 
   const buildFn = () => buildAll([dir])
 
-  let watchers: chokidar.FSWatcher[] = []
+  let watchers: FSWatcher[] = []
 
   // Server middleware for serving content files
   const urlToDir = new Map<string, string>()

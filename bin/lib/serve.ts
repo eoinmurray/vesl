@@ -1,7 +1,8 @@
 
-import { createServer } from 'vite'
+import { createServer, preview } from 'vite'
 import importConfig from "./import-config";
 import veslxPlugin from '../../plugin/src/plugin'
+import path from 'path'
 
 export default async function start() {
   const cwd = process.cwd()
@@ -16,16 +17,20 @@ export default async function start() {
   }
 
   const veslxRoot = new URL('../..', import.meta.url).pathname;
+  const configFile = new URL('../../vite.config.ts', import.meta.url).pathname;
 
-  const server = await createServer({
+  // Resolve content directory relative to user's cwd (where config lives)
+  const contentDir = path.isAbsolute(config.dir)
+    ? config.dir
+    : path.resolve(cwd, config.dir);
+
+  const server = await preview({
     root: veslxRoot,
-    configFile: new URL('../../vite.config.ts', import.meta.url).pathname,
+    configFile,
     plugins: [
-      veslxPlugin(config.dir)
+      veslxPlugin(contentDir)
     ],
   })
-
-  await server.listen()
 
   server.printUrls()
   server.bindCLIShortcuts({ print: true })
