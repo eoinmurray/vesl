@@ -13,13 +13,17 @@ import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Use pre-built client if available (published package), otherwise use src/ (local dev)
 const distClientPath = path.join(__dirname, 'dist/client')
 const srcPath = path.join(__dirname, 'src')
-const usePrebuilt = fs.existsSync(path.join(distClientPath, 'main.js'))
-const clientPath = usePrebuilt ? distClientPath : srcPath
+const hasPrebuilt = fs.existsSync(path.join(distClientPath, 'main.js'))
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  // Only use pre-built files for dev server, not production build
+  // Pre-built files have externalized React which breaks production bundles
+  const usePrebuilt = command === 'serve' && hasPrebuilt
+  const clientPath = usePrebuilt ? distClientPath : srcPath
+
+  return {
   clearScreen: false,
   cacheDir: path.join(__dirname, 'node_modules/.vite'),
   publicDir: path.join(__dirname, 'public'),
@@ -90,4 +94,5 @@ export default defineConfig({
       'class-variance-authority',
     ],
   },
+  }
 })
