@@ -100,6 +100,9 @@ export default function contentPlugin(contentDir: string): Plugin {
             allow: [dir],
           },
         },
+        optimizeDeps: {
+          exclude: ['virtual:content-modules', 'veslx'],
+        },
       }
     },
 
