@@ -71,9 +71,15 @@ export default async function buildApp(dir?: string) {
 
   console.log(`Building veslx app in ${cwd}`);
 
+  // Resolve content directory from CLI arg
+  const contentDir = dir
+    ? (path.isAbsolute(dir) ? dir : path.resolve(cwd, dir))
+    : cwd;
+
   // Get defaults first, then merge with config file if it exists
-  const defaults = await getDefaultConfig(cwd);
-  const fileConfig = await importConfig(cwd);
+  // Look for config in content directory first, then fall back to cwd
+  const defaults = await getDefaultConfig(contentDir);
+  const fileConfig = await importConfig(contentDir) || await importConfig(cwd);
 
   // CLI argument takes precedence over config file
   const config = {
@@ -91,10 +97,10 @@ export default async function buildApp(dir?: string) {
   const tempOutDir = path.join(veslxRoot, '.veslx-build')
   const finalOutDir = path.join(cwd, 'dist')
 
-  // Resolve content directory relative to user's cwd (where config lives)
-  const contentDir = path.isAbsolute(config.dir)
-    ? config.dir
-    : path.resolve(cwd, config.dir);
+  // Final content directory: CLI arg already resolved, or resolve from config
+  const finalContentDir = dir
+    ? contentDir
+    : (path.isAbsolute(config.dir) ? config.dir : path.resolve(cwd, config.dir));
 
   await build({
     root: veslxRoot,
@@ -111,7 +117,7 @@ export default async function buildApp(dir?: string) {
       },
     },
     plugins: [
-      veslxPlugin(contentDir, config)
+      veslxPlugin(finalContentDir, config)
     ],
     logLevel: 'info',
   })

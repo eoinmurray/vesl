@@ -52,9 +52,15 @@ export default async function start(dir?: string) {
 
   console.log(`Starting veslx dev server in ${cwd}`);
 
+  // Resolve content directory - CLI arg takes precedence
+  const contentDir = dir
+    ? (path.isAbsolute(dir) ? dir : path.resolve(cwd, dir))
+    : cwd;
+
   // Get defaults first, then merge with config file if it exists
-  const defaults = await getDefaultConfig(cwd);
-  const fileConfig = await importConfig(cwd);
+  // Look for config in content directory first, then fall back to cwd
+  const defaults = await getDefaultConfig(contentDir);
+  const fileConfig = await importConfig(contentDir) || await importConfig(cwd);
 
   // CLI argument takes precedence over config file
   const config = {
@@ -68,10 +74,10 @@ export default async function start(dir?: string) {
   const veslxRoot = new URL('../..', import.meta.url).pathname;
   const configFile = new URL('../../vite.config.ts', import.meta.url).pathname;
 
-  // Resolve content directory relative to user's cwd (where config lives)
-  const contentDir = path.isAbsolute(config.dir)
-    ? config.dir
-    : path.resolve(cwd, config.dir);
+  // Final content directory: CLI arg already resolved, or resolve from config
+  const finalContentDir = dir
+    ? contentDir
+    : (path.isAbsolute(config.dir) ? config.dir : path.resolve(cwd, config.dir));
 
   const server = await createServer({
     root: veslxRoot,
@@ -79,7 +85,7 @@ export default async function start(dir?: string) {
     // Cache in user's project so it persists across bunx runs
     cacheDir: path.join(cwd, 'node_modules/.vite'),
     plugins: [
-      veslxPlugin(contentDir, config)
+      veslxPlugin(finalContentDir, config)
     ],
   })
 
