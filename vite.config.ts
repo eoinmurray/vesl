@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -10,8 +9,15 @@ import remarkGfm from 'remark-gfm'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// Use pre-built client if available (published package), otherwise use src/ (local dev)
+const distClientPath = path.join(__dirname, 'dist/client')
+const srcPath = path.join(__dirname, 'src')
+const usePrebuilt = fs.existsSync(path.join(distClientPath, 'main.js'))
+const clientPath = usePrebuilt ? distClientPath : srcPath
 
 export default defineConfig({
   clearScreen: false,
@@ -37,7 +43,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.join(__dirname, 'src'),
+      '@': clientPath,
     },
   },
   server: {
@@ -60,7 +66,7 @@ export default defineConfig({
     reportCompressedSize: false,
   },
   optimizeDeps: {
-    entries: [path.join(__dirname, 'src/main.tsx')],
+    entries: [path.join(clientPath, usePrebuilt ? 'main.js' : 'main.tsx')],
     include: [
       'react',
       'react-dom',
@@ -69,6 +75,19 @@ export default defineConfig({
       'react/jsx-dev-runtime',
       '@mdx-js/react',
       'react-router-dom',
+      // Pre-bundle heavy UI deps
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tooltip',
+      'lucide-react',
+      'embla-carousel-react',
+      'next-themes',
+      'clsx',
+      'tailwind-merge',
+      'class-variance-authority',
     ],
   },
 })

@@ -1,6 +1,6 @@
 {
   "name": "veslx",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "bin": {
     "veslx": "bin/veslx.ts"
@@ -12,11 +12,14 @@
     "src",
     "public",
     "index.html",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vite.lib.config.ts"
   ],
   "scripts": {
     "dev": "bun bin/veslx.ts serve",
-    "build": "bun bin/veslx.ts build"
+    "build": "bun bin/veslx.ts build",
+    "build:lib": "vite build --config vite.lib.config.ts",
+    "prepublishOnly": "npm run build:lib"
   },
   "dependencies": {
     "acorn": "^8.15.0",
@@ -82,7 +85,8 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.3"
+    "typescript-eslint": "^8.46.3",
+    "vite-plugin-dts": "^4.5.4"
   },
   "overrides": {}
 }
