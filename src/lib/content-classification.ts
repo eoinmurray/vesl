@@ -40,14 +40,16 @@ export function directoryToPostEntries(directory: DirectoryEntry): PostEntry[] {
   const folders = directory.children.filter((c): c is DirectoryEntry => c.type === "directory");
   const standaloneFiles = findMdxFiles(directory);
 
-  const folderPosts: PostEntry[] = folders.map((folder) => ({
-    type: 'folder' as const,
-    name: folder.name,
-    path: folder.path,
-    readme: findReadme(folder),
-    slides: findSlides(folder),
-    file: null,
-  }));
+  const folderPosts: PostEntry[] = folders
+    .map((folder) => ({
+      type: 'folder' as const,
+      name: folder.name,
+      path: folder.path,
+      readme: findReadme(folder),
+      slides: findSlides(folder),
+      file: null,
+    }))
+    .filter((post) => post.readme || post.slides); // Only include folders with content
 
   const filePosts: PostEntry[] = standaloneFiles.map((file) => ({
     type: 'file' as const,
