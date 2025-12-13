@@ -67,6 +67,12 @@ export default defineConfig(({ command }) => {
   resolve: {
     alias: {
       '@': clientPath,
+      // Ensure React resolves from veslx's node_modules for MDX files in user content
+      'react': path.join(__dirname, 'node_modules/react'),
+      'react-dom': path.join(__dirname, 'node_modules/react-dom'),
+      'react/jsx-runtime': path.join(__dirname, 'node_modules/react/jsx-runtime'),
+      'react/jsx-dev-runtime': path.join(__dirname, 'node_modules/react/jsx-dev-runtime'),
+      '@mdx-js/react': path.join(__dirname, 'node_modules/@mdx-js/react'),
     },
   },
   server: {
