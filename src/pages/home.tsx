@@ -6,21 +6,27 @@ import { ErrorDisplay } from "@/components/page-error";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
 import { ContentTabs } from "@/components/content-tabs";
-import { useContentView } from "@/hooks/use-content-view";
 import {
+  type ContentView,
   directoryToPostEntries,
   filterVisiblePosts,
   getViewCounts,
 } from "@/lib/content-classification";
 import siteConfig from "virtual:veslx-config";
 
-export function Home() {
+interface HomeProps {
+  view?: ContentView;
+}
+
+export function Home({ view }: HomeProps) {
   const { "*": path = "." } = useParams();
   const { directory, loading, error } = useDirectory(path)
   const config = siteConfig;
-  const [view, setView] = useContentView();
 
-  const isRoot = path === "." || path === "";
+  // Use prop view, fallback to config default
+  const activeView = view ?? config.defaultView;
+
+  const isRoot = path === "." || path === "" || path === "posts" || path === "docs";
 
   // Calculate counts for tabs (only meaningful on root)
   const counts = directory
@@ -56,16 +62,19 @@ export function Home() {
               )}
             </div>
           )}
-          {isRoot && directory && (
-            <div className="animate-fade-in">
-              <ContentTabs value={view} onChange={setView} counts={counts} />
-            </div>
-          )}
-          {directory && (
-            <div className="animate-fade-in">
-              <PostList directory={directory} view={isRoot ? view : 'all'} />
-            </div>
-          )}
+
+          <div className="">
+            {isRoot && directory && (
+              <div className="animate-fade-in">
+                <ContentTabs value={activeView} counts={counts} />
+              </div>
+            )}
+            {directory && (
+              <div className="animate-fade-in">
+                <PostList directory={directory} view={isRoot ? activeView : 'all'} />
+              </div>
+            )}
+          </div>
         </main>
       </main>
     </div>
