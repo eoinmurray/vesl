@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import mdx from '@mdx-js/rollup'
@@ -9,10 +9,43 @@ import remarkGfm from 'remark-gfm'
 import remarkMdxFrontmatter from 'remark-mdx-frontmatter'
 import { remarkSlides } from './plugin/src/remark-slides'
 import { fileURLToPath } from 'url'
+import { createRequire } from 'module'
 import path from 'path'
 import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const require = createRequire(import.meta.url)
+
+// Resolve React packages from veslx's node_modules for MDX files in user content
+// This is needed when veslx runs via bunx from a temp directory
+function reactResolverPlugin(): Plugin {
+  const reactPackages = [
+    'react',
+    'react/jsx-runtime',
+    'react/jsx-dev-runtime',
+    'react-dom',
+    'react-dom/client',
+    '@mdx-js/react',
+  ]
+
+  const resolved = new Map<string, string>()
+  for (const pkg of reactPackages) {
+    try {
+      resolved.set(pkg, require.resolve(pkg))
+    } catch {}
+  }
+
+  return {
+    name: 'veslx-react-resolver',
+    enforce: 'pre',
+    resolveId(id) {
+      if (resolved.has(id)) {
+        return resolved.get(id)
+      }
+      return null
+    },
+  }
+}
 
 const distClientPath = path.join(__dirname, 'dist/client')
 const srcPath = path.join(__dirname, 'src')
@@ -38,6 +71,8 @@ export default defineConfig(({ command }) => {
   cacheDir: path.join(__dirname, 'node_modules/.vite'),
   publicDir: path.join(__dirname, 'public'),
   plugins: [
+    // Resolve React from veslx's dependencies for user MDX content (handles bunx installs)
+    reactResolverPlugin(),
     tailwindcss(),
     // MDX for slides - splits at --- into <Slide> components
     {
@@ -67,13 +102,13 @@ export default defineConfig(({ command }) => {
   resolve: {
     alias: {
       '@': clientPath,
-      // Ensure React resolves from veslx's node_modules for MDX files in user content
-      'react': path.join(__dirname, 'node_modules/react'),
-      'react-dom': path.join(__dirname, 'node_modules/react-dom'),
-      'react/jsx-runtime': path.join(__dirname, 'node_modules/react/jsx-runtime'),
-      'react/jsx-dev-runtime': path.join(__dirname, 'node_modules/react/jsx-dev-runtime'),
-      '@mdx-js/react': path.join(__dirname, 'node_modules/@mdx-js/react'),
     },
+    // Ensure single copies of React packages are used
+    dedupe: ['react', 'react-dom', '@mdx-js/react'],
+  },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    reportCompressedSize: false,
   },
   server: {
     host: '0.0.0.0',
@@ -89,10 +124,6 @@ export default defineConfig(({ command }) => {
     port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
     strictPort: true,
     allowedHosts: true,
-  },
-  build: {
-    chunkSizeWarningLimit: 1500,
-    reportCompressedSize: false,
   },
   optimizeDeps: {
     entries: [path.join(clientPath, usePrebuilt ? 'main.js' : 'main.tsx')],
