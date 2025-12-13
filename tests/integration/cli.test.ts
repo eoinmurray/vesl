@@ -101,6 +101,10 @@ describe("veslx CLI integration", () => {
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
 
+        // Check frontmatter is displayed (title and description from YAML front matter)
+        const pageContent = await page.content();
+        expect(pageContent).toContain("Integration test content"); // description from frontmatter
+
         // Test SLIDES page (presentation)
         await page.goto("http://localhost:3000/SLIDES.mdx");
         await page.waitForSelector("#root", { state: "attached" });
@@ -176,6 +180,10 @@ describe("veslx CLI integration", () => {
         await page.waitForTimeout(1000);
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
+
+        // Check frontmatter is displayed (title and description from YAML front matter)
+        const pageContent = await page.content();
+        expect(pageContent).toContain("Integration test content"); // description from frontmatter
 
         // Test SLIDES page (presentation)
         await page.goto("http://localhost:3001/SLIDES.mdx");
