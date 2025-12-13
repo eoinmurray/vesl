@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import type { ContentView } from "@/lib/content-classification";
 
 interface ContentTabsProps {
@@ -6,6 +6,12 @@ interface ContentTabsProps {
   onChange: (view: ContentView) => void;
   counts: { posts: number; docs: number; all: number };
 }
+
+const views: { key: ContentView; label: string }[] = [
+  { key: "posts", label: "posts" },
+  { key: "docs", label: "docs" },
+  { key: "all", label: "all" },
+];
 
 export function ContentTabs({ value, onChange, counts }: ContentTabsProps) {
   const hasOnlyPosts = counts.posts > 0 && counts.docs === 0;
@@ -15,26 +21,33 @@ export function ContentTabs({ value, onChange, counts }: ContentTabsProps) {
     return null;
   }
 
+  const isDisabled = (key: ContentView) => {
+    if (key === "posts") return counts.posts === 0;
+    if (key === "docs") return counts.docs === 0;
+    return false;
+  };
+
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as ContentView)}>
-      <TabsList>
-        <TabsTrigger value="posts" disabled={counts.posts === 0}>
-          Posts
-          {counts.posts > 0 && (
-            <span className="ml-1.5 text-xs opacity-60">({counts.posts})</span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="docs" disabled={counts.docs === 0}>
-          Docs
-          {counts.docs > 0 && (
-            <span className="ml-1.5 text-xs opacity-60">({counts.docs})</span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="all">
-          All
-          <span className="ml-1.5 text-xs opacity-60">({counts.all})</span>
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
+    <nav className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
+      {views.map((view, i) => (
+        <span key={view.key} className="flex items-center">
+          {i > 0 && <span className="mx-2 select-none opacity-30">/</span>}
+          <button
+            onClick={() => onChange(view.key)}
+            disabled={isDisabled(view.key)}
+            className={cn(
+              "transition-colors duration-150",
+              "hover:text-foreground",
+              "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-muted-foreground",
+              value === view.key
+                ? "text-foreground underline underline-offset-4 decoration-primary/60"
+                : ""
+            )}
+          >
+            {view.label}
+          </button>
+        </span>
+      ))}
+    </nav>
   );
 }
