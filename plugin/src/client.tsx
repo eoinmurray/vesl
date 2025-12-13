@@ -52,7 +52,8 @@ export function findMdxFiles(directory: DirectoryEntry): FileEntry[] {
 }
 
 export function findSlides(directory: DirectoryEntry): FileEntry | null {
-  const readme = directory.children.find((child) =>
+  // First check for standard SLIDES.mdx files
+  const standardSlides = directory.children.find((child) =>
     child.type === "file" &&
     [
       "SLIDES.md", "Slides.md", "slides.md",
@@ -60,7 +61,15 @@ export function findSlides(directory: DirectoryEntry): FileEntry | null {
     ].includes(child.name)
   ) as FileEntry | undefined;
 
-  return readme || null;
+  if (standardSlides) return standardSlides;
+
+  // Then check for *.slides.mdx files
+  const dotSlides = directory.children.find((child) =>
+    child.type === "file" &&
+    (child.name.endsWith('.slides.mdx') || child.name.endsWith('.slides.md'))
+  ) as FileEntry | undefined;
+
+  return dotSlides || null;
 }
 
 
