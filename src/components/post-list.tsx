@@ -1,18 +1,16 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { DirectoryEntry, FileEntry } from "../../plugin/src/lib";
-import { findReadme, findSlides, findMdxFiles } from "../../plugin/src/client";
+import type { DirectoryEntry } from "../../plugin/src/lib";
 import { formatDate } from "@/lib/format-date";
 import { ArrowRight } from "lucide-react";
-
-type PostEntry = {
-  type: 'folder' | 'file';
-  name: string;
-  path: string;
-  readme: FileEntry | null;
-  slides: FileEntry | null;
-  file: FileEntry | null; // For standalone MDX files
-};
+import {
+  type ContentView,
+  type PostEntry,
+  directoryToPostEntries,
+  filterVisiblePosts,
+  filterByView,
+  getFrontmatter,
+} from "@/lib/content-classification";
 
 // Helper to extract numeric prefix from filename (e.g., "01-intro" → 1)
 function extractOrder(name: string): number | null {
@@ -28,35 +26,13 @@ function stripNumericPrefix(name: string): string {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-export default function PostList({ directory }: { directory: DirectoryEntry }) {
-  const folders = directory.children.filter((c): c is DirectoryEntry => c.type === "directory");
-  const standaloneFiles = findMdxFiles(directory);
+interface PostListProps {
+  directory: DirectoryEntry;
+  view?: ContentView;
+}
 
-  // Convert folders to post entries
-  const folderPosts: PostEntry[] = folders.map((folder) => {
-    const readme = findReadme(folder);
-    const slides = findSlides(folder);
-    return {
-      type: 'folder' as const,
-      name: folder.name,
-      path: folder.path,
-      readme,
-      slides,
-      file: null,
-    };
-  });
-
-  // Convert standalone MDX files to post entries
-  const filePosts: PostEntry[] = standaloneFiles.map((file) => ({
-    type: 'file' as const,
-    name: file.name.replace(/\.mdx?$/, ''),
-    path: file.path,
-    readme: null,
-    slides: null,
-    file,
-  }));
-
-  let posts: PostEntry[] = [...folderPosts, ...filePosts];
+export default function PostList({ directory, view = 'all' }: PostListProps) {
+  let posts = directoryToPostEntries(directory);
 
   if (posts.length === 0) {
     return (
@@ -67,15 +43,18 @@ export default function PostList({ directory }: { directory: DirectoryEntry }) {
   }
 
   // Filter out hidden and draft posts
-  posts = posts.filter((post) => {
-    const frontmatter = post.readme?.frontmatter || post.file?.frontmatter;
-    return frontmatter?.visibility !== "hidden" && frontmatter?.draft !== true;
-  });
+  posts = filterVisiblePosts(posts);
 
-  // Helper to get frontmatter from post
-  const getFrontmatter = (post: PostEntry) => {
-    return post.readme?.frontmatter || post.file?.frontmatter || post.slides?.frontmatter;
-  };
+  // Apply view filter
+  posts = filterByView(posts, view);
+
+  if (posts.length === 0) {
+    return (
+      <div className="py-24 text-center">
+        <p className="text-muted-foreground font-mono text-sm tracking-wide">no entries</p>
+      </div>
+    );
+  }
 
   // Helper to get date from post
   const getPostDate = (post: PostEntry): Date | null => {

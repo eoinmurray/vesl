@@ -5,12 +5,27 @@ import PostList from "@/components/post-list";
 import { ErrorDisplay } from "@/components/page-error";
 import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
+import { ContentTabs } from "@/components/content-tabs";
+import { useContentView } from "@/hooks/use-content-view";
+import {
+  directoryToPostEntries,
+  filterVisiblePosts,
+  getViewCounts,
+} from "@/lib/content-classification";
 import siteConfig from "virtual:veslx-config";
 
 export function Home() {
   const { "*": path = "." } = useParams();
   const { directory, loading, error } = useDirectory(path)
   const config = siteConfig;
+  const [view, setView] = useContentView();
+
+  const isRoot = path === "." || path === "";
+
+  // Calculate counts for tabs (only meaningful on root)
+  const counts = directory
+    ? getViewCounts(filterVisiblePosts(directoryToPostEntries(directory)))
+    : { posts: 0, docs: 0, all: 0 };
 
   if (error) {
     return <ErrorDisplay error={error} path={path} />;
@@ -27,9 +42,9 @@ export function Home() {
       <RunningBar />
       <Header />
       <main className="flex-1 mx-auto w-full max-w-[var(--content-width)] px-[var(--page-padding)]">
-        <title>{(path === "." || path === "") ? config.name : `${config.name} - ${path}`}</title>
+        <title>{isRoot ? config.name : `${config.name} - ${path}`}</title>
         <main className="flex flex-col gap-8 mb-32 mt-32">
-          {(path === "." || path === "") && (
+          {isRoot && (
             <div className="animate-fade-in">
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
                 {config.name}
@@ -41,9 +56,14 @@ export function Home() {
               )}
             </div>
           )}
+          {isRoot && directory && (
+            <div className="animate-fade-in">
+              <ContentTabs value={view} onChange={setView} counts={counts} />
+            </div>
+          )}
           {directory && (
             <div className="animate-fade-in">
-              <PostList directory={directory}/>
+              <PostList directory={directory} view={isRoot ? view : 'all'} />
             </div>
           )}
         </main>
