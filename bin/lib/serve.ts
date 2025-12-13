@@ -34,13 +34,11 @@ async function getDefaultConfig(cwd: string) {
   const pkg = await readPackageJson(cwd);
   const folderName = path.basename(cwd);
   const name = pkg?.name || folderName;
-  const shortName = name.slice(0, 2).toLowerCase();
 
   return {
     dir: '.',
     site: {
       name,
-      shortName,
       description: pkg?.description || '',
       github: getGitHubRepo(cwd),
     }

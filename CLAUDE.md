@@ -67,7 +67,7 @@ The plugin creates two virtual modules:
 2. **`virtual:veslx-config`** - Provides site configuration:
    ```ts
    import siteConfig from "virtual:veslx-config";
-   // { name, shortName, description, github }
+   // { name, description, github }
    ```
 
 ### Content Index (.veslx.json)
@@ -110,7 +110,6 @@ export default {
   dir: './content',  // Content directory (default: '.')
   site: {
     name: 'My Project',      // Site name (default: folder name)
-    shortName: 'mp',         // Header logo (default: first 2 chars)
     description: 'A description',  // Homepage subtitle
     github: 'user/repo',     // GitHub link in header
   }

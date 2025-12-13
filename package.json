@@ -23,8 +23,8 @@
     "vite.lib.config.ts"
   ],
   "scripts": {
-    "dev": "VESLX_DEV=1 bun bin/veslx.ts serve",
-    "build": "bun bin/veslx.ts build",
+    "dev": "VESLX_DEV=1 bun bin/veslx.ts serve content",
+    "build": "bun bin/veslx.ts build content",
     "build:lib": "vite build --config vite.lib.config.ts",
     "prepublishOnly": "npm run build:lib"
   },

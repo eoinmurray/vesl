@@ -24,7 +24,7 @@ export function Header({ slideControls }: HeaderProps = {}) {
             to="/"
             className="rounded-lg font-mono py-1.5 text-sm font-medium text-muted-foreground hover:underline"
           >
-            {config.shortName}
+            {config.name}
           </Link>
         </nav>
 
