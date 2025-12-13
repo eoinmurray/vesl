@@ -113,6 +113,29 @@ describe("veslx CLI integration", () => {
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
 
+        // Test .slides.mdx format (alternative slides naming)
+        await page.goto("http://localhost:3000/presentation.slides.mdx");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        rootContent = await page.locator("#root").innerHTML();
+        expect(rootContent.length).toBeGreaterThan(100);
+        expect(rootContent).toContain("Dot Slides Test");
+
+        // Test hyphenated .slides.mdx filename (e.g., getting-started.slides.mdx)
+        await page.goto("http://localhost:3000/getting-started.slides.mdx");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        rootContent = await page.locator("#root").innerHTML();
+        expect(rootContent.length).toBeGreaterThan(100);
+        expect(rootContent).toContain("Getting Started Slides");
+
+        // Verify standalone .slides.mdx files appear in home page listing
+        await page.goto("http://localhost:3000/");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        const slidesLinks = await page.locator('a[href*=".slides.mdx"]').count();
+        expect(slidesLinks).toBeGreaterThan(0);
+
         // Verify no console errors across all pages
         expect(consoleErrors).toEqual([]);
 
@@ -193,6 +216,29 @@ describe("veslx CLI integration", () => {
         await page.waitForTimeout(1000);
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
+
+        // Test .slides.mdx format (alternative slides naming)
+        await page.goto("http://localhost:3001/presentation.slides.mdx");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        rootContent = await page.locator("#root").innerHTML();
+        expect(rootContent.length).toBeGreaterThan(100);
+        expect(rootContent).toContain("Dot Slides Test");
+
+        // Test hyphenated .slides.mdx filename (e.g., getting-started.slides.mdx)
+        await page.goto("http://localhost:3001/getting-started.slides.mdx");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        rootContent = await page.locator("#root").innerHTML();
+        expect(rootContent.length).toBeGreaterThan(100);
+        expect(rootContent).toContain("Getting Started Slides");
+
+        // Verify standalone .slides.mdx files appear in home page listing
+        await page.goto("http://localhost:3001/");
+        await page.waitForSelector("#root", { state: "attached" });
+        await page.waitForTimeout(1000);
+        const slidesLinks = await page.locator('a[href*=".slides.mdx"]').count();
+        expect(slidesLinks).toBeGreaterThan(0);
 
         // Verify no console errors across all pages
         expect(consoleErrors).toEqual([]);

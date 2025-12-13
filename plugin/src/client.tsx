@@ -72,6 +72,23 @@ export function findSlides(directory: DirectoryEntry): FileEntry | null {
   return dotSlides || null;
 }
 
+/**
+ * Find all standalone slides files in a directory (*.slides.mdx, *.slides.md)
+ * These are slides files that aren't part of a folder (like getting-started.slides.mdx)
+ */
+export function findStandaloneSlides(directory: DirectoryEntry): FileEntry[] {
+  const standardSlideFiles = [
+    "SLIDES.mdx", "Slides.mdx", "slides.mdx",
+    "SLIDES.md", "Slides.md", "slides.md",
+  ];
+
+  return directory.children.filter((child): child is FileEntry =>
+    child.type === "file" &&
+    (child.name.endsWith('.slides.mdx') || child.name.endsWith('.slides.md')) &&
+    !standardSlideFiles.includes(child.name)
+  );
+}
+
 
 export type DirectoryError =
   | { type: 'path_not_found'; message: string; status: 404 };

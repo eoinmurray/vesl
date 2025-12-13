@@ -123,9 +123,25 @@ export function useMDXContent(path: string) {
 function findSlidesModule(modules: ModuleMap, path: string): ModuleLoader | null {
   const keys = Object.keys(modules)
 
+  // Normalize path - remove leading slash if present
+  const normalizedPath = path.replace(/^\//, '')
+
   // If path already ends with .mdx, match exactly
-  if (path.endsWith('.mdx')) {
-    const matchingKey = keys.find(key => key.endsWith(`/${path}`))
+  if (normalizedPath.endsWith('.mdx')) {
+    // Try multiple matching strategies for different Vite glob formats
+    const matchingKey = keys.find(key => {
+      // Strategy 1: Key ends with /path (e.g., @content/docs/foo.slides.mdx matches docs/foo.slides.mdx)
+      if (key.endsWith(`/${normalizedPath}`)) return true
+      // Strategy 2: Key equals @content/path (alias form)
+      if (key === `@content/${normalizedPath}`) return true
+      // Strategy 3: Key equals /@content/path (with leading slash)
+      if (key === `/@content/${normalizedPath}`) return true
+      // Strategy 4: Key equals path directly
+      if (key === normalizedPath) return true
+      // Strategy 5: Key equals /path (with leading slash)
+      if (key === `/${normalizedPath}`) return true
+      return false
+    })
     return matchingKey ? modules[matchingKey] : null
   }
 
@@ -133,12 +149,17 @@ function findSlidesModule(modules: ModuleMap, path: string): ModuleLoader | null
   // 1. folder/SLIDES.mdx (current convention)
   // 2. folder/index.slides.mdx (alternative)
   const candidates = [
-    `/${path}/SLIDES.mdx`,
-    `/${path}/index.slides.mdx`,
+    `${normalizedPath}/SLIDES.mdx`,
+    `${normalizedPath}/index.slides.mdx`,
   ]
 
-  for (const suffix of candidates) {
-    const matchingKey = keys.find(key => key.endsWith(suffix))
+  for (const candidate of candidates) {
+    const matchingKey = keys.find(key => {
+      if (key.endsWith(`/${candidate}`)) return true
+      if (key === `@content/${candidate}`) return true
+      if (key === candidate) return true
+      return false
+    })
     if (matchingKey) {
       return modules[matchingKey]
     }

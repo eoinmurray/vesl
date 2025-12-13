@@ -26,7 +26,13 @@ export function ContentRouter() {
   }
 
   // Check if this is a slides file
-  if (path.endsWith('.slides.mdx') || path.endsWith('SLIDES.mdx')) {
+  const filename = path.split('/').pop()?.toLowerCase() || ''
+  const isSlides =
+    path.endsWith('.slides.mdx') ||
+    path.endsWith('.slides.md') ||
+    filename === 'slides.mdx' ||
+    filename === 'slides.md'
+  if (isSlides) {
     return <SlidesPage />
   }
 
