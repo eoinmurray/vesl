@@ -80,10 +80,11 @@ export default defineConfig(({ command }) => {
     reactResolverPlugin(),
     tailwindcss(),
     // MDX for slides - splits at --- into <Slide> components
+    // Matches: SLIDES.mdx, slides.mdx, *.slides.mdx
     {
       enforce: 'pre',
       ...mdx({
-        include: /SLIDES\.mdx$/,
+        include: /SLIDES\.mdx$|slides\.mdx$/i,
         remarkPlugins: [
           ...commonRemarkPlugins,
           remarkSlides, // Transform --- into <Slide> wrappers
@@ -92,11 +93,11 @@ export default defineConfig(({ command }) => {
         providerImportSource: '@mdx-js/react',
       }),
     },
-    // MDX for regular posts
+    // MDX for regular posts (excludes all slides files)
     {
       enforce: 'pre',
       ...mdx({
-        exclude: /SLIDES\.mdx$/,
+        exclude: /SLIDES\.mdx$|slides\.mdx$/i,
         remarkPlugins: commonRemarkPlugins,
         rehypePlugins: [rehypeKatex],
         providerImportSource: '@mdx-js/react',

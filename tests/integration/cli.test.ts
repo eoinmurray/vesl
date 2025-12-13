@@ -97,11 +97,17 @@ describe("veslx CLI integration", () => {
         // Test README page (post)
         await page.goto("http://localhost:3000/README.mdx");
         await page.waitForSelector("#root", { state: "attached" });
-        await page.waitForTimeout(1000);
+        // Wait for article element (MDX content is rendered within an article)
+        await page.waitForSelector("article", { state: "attached", timeout: 10000 });
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
 
         // Check frontmatter is displayed (title, description, date from YAML front matter)
+        // Wait for the frontmatter description to be visible
+        await page.waitForFunction(
+          () => document.body.textContent?.includes("Integration test content"),
+          { timeout: 10000 }
+        );
         const pageContent = await page.content();
         expect(pageContent).toContain("Integration test content"); // description from frontmatter
         expect(pageContent).toContain("15 Jan, 24"); // date from frontmatter
@@ -128,6 +134,9 @@ describe("veslx CLI integration", () => {
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
         expect(rootContent).toContain("Getting Started Slides");
+
+        // Test FrontMatter component works in slides (should render description from frontmatter)
+        expect(rootContent).toContain("Test hyphenated slides filename"); // description from frontmatter
 
         // Verify standalone .slides.mdx files appear in home page listing
         await page.goto("http://localhost:3000/");
@@ -201,11 +210,17 @@ describe("veslx CLI integration", () => {
         // Test README page (post)
         await page.goto("http://localhost:3001/README.mdx");
         await page.waitForSelector("#root", { state: "attached" });
-        await page.waitForTimeout(1000);
+        // Wait for article element (MDX content is rendered within an article)
+        await page.waitForSelector("article", { state: "attached", timeout: 10000 });
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
 
         // Check frontmatter is displayed (title, description, date from YAML front matter)
+        // Wait for the frontmatter description to be visible
+        await page.waitForFunction(
+          () => document.body.textContent?.includes("Integration test content"),
+          { timeout: 10000 }
+        );
         const pageContent = await page.content();
         expect(pageContent).toContain("Integration test content"); // description from frontmatter
         expect(pageContent).toContain("15 Jan, 24"); // date from frontmatter
@@ -232,6 +247,9 @@ describe("veslx CLI integration", () => {
         rootContent = await page.locator("#root").innerHTML();
         expect(rootContent.length).toBeGreaterThan(100);
         expect(rootContent).toContain("Getting Started Slides");
+
+        // Test FrontMatter component works in slides (should render description from frontmatter)
+        expect(rootContent).toContain("Test hyphenated slides filename"); // description from frontmatter
 
         // Verify standalone .slides.mdx files appear in home page listing
         await page.goto("http://localhost:3001/");

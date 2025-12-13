@@ -1,13 +1,8 @@
-import { useMDXContent, useMDXSlides } from "@/hooks/use-mdx-content";
+import { useFrontmatter } from "@/lib/frontmatter-context";
 import { formatDate } from "@/lib/format-date"
-import { useParams } from "react-router-dom"
 
 export function FrontMatter(){
-  const { "path": path = "." } = useParams();
-  const { frontmatter: readmeFm } = useMDXContent(path);
-  const { frontmatter: slidesFm } = useMDXSlides(path);
-
-  let frontmatter = readmeFm || slidesFm;
+  const frontmatter = useFrontmatter();
 
   return (
     <div>

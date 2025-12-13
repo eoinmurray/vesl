@@ -88,24 +88,72 @@ export async function waitForServer(
   return false;
 }
 
+// Helper script for SPA static server
+const SPA_SERVER_SCRIPT = `
+const distPath = process.argv[2];
+const port = parseInt(process.argv[3], 10);
+const fs = require('fs');
+const path = require('path');
+
+Bun.serve({
+  port,
+  async fetch(request) {
+    const url = new URL(request.url);
+    let filePath = path.join(distPath, url.pathname);
+
+    // Check if file exists
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return new Response(Bun.file(filePath));
+    }
+
+    // Check if it's a directory and serve index.html
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      const indexPath = path.join(filePath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        return new Response(Bun.file(indexPath));
+      }
+    }
+
+    // SPA fallback - serve root index.html
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return new Response(Bun.file(indexPath));
+    }
+
+    return new Response('Not Found', { status: 404 });
+  },
+});
+
+console.log('Server started on port ' + port);
+`;
+
 export async function serveStatic(
   distPath: string,
   port: number = 3001
 ): Promise<Subprocess> {
-  // -s enables single-page app mode (all routes fallback to index.html)
-  const server = Bun.spawn(
-    ["bunx", "serve", distPath, "-l", String(port), "-s"],
-    {
-      stdout: "pipe",
-      stderr: "pipe",
-    }
-  );
+  // Write the server script to a temp file
+  const scriptPath = path.join(os.tmpdir(), 'spa-server-' + Date.now() + '.js');
+  fs.writeFileSync(scriptPath, SPA_SERVER_SCRIPT);
+
+  // Start the server using Bun
+  const server = Bun.spawn(["bun", "run", scriptPath, distPath, String(port)], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
   // Wait for server to be ready
   const ready = await waitForServer(`http://localhost:${port}`, 30000);
   if (!ready) {
     server.kill();
+    fs.unlinkSync(scriptPath);
     throw new Error(`Static server failed to start on port ${port}`);
+  }
+
+  // Clean up script file after server starts
+  try {
+    fs.unlinkSync(scriptPath);
+  } catch {
+    // Ignore cleanup errors
   }
 
   return server;

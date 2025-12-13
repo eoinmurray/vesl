@@ -6,6 +6,7 @@ import { RunningBar } from "@/components/running-bar";
 import { Header } from "@/components/header";
 import { useMDXSlides } from "@/hooks/use-mdx-content";
 import { slidesMdxComponents } from "@/components/slides-renderer";
+import { FrontmatterProvider } from "@/lib/frontmatter-context";
 
 
 export function SlidesPage() {
@@ -137,11 +138,13 @@ export function SlidesPage() {
           onNext: goToNext,
         }}
       />
-      <div {...{[FULLSCREEN_DATA_ATTR]: "true"}}>
-        <div ref={contentRef}>
-          <Content components={slidesMdxComponents} />
+      <FrontmatterProvider frontmatter={frontmatter}>
+        <div {...{[FULLSCREEN_DATA_ATTR]: "true"}}>
+          <div ref={contentRef}>
+            <Content components={slidesMdxComponents} />
+          </div>
         </div>
-      </div>
+      </FrontmatterProvider>
     </main>
   )
 }
